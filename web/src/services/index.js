@@ -1,0 +1,245 @@
+import api from './api';
+
+export const authService = {
+    register: async (userData) => {
+        const response = await api.post('/auth/register', userData);
+        return response.data;
+    },
+
+    login: async (credentials) => {
+        const response = await api.post('/auth/login', credentials);
+        return response.data;
+    },
+
+    logout: async () => {
+        const response = await api.post('/auth/logout');
+        return response.data;
+    },
+
+    getMe: async () => {
+        const response = await api.get('/auth/me');
+        return response.data;
+    },
+
+    updateProfilePicture: async (formData) => {
+        const response = await api.post('/auth/profile-picture', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        return response.data;
+    },
+};
+
+export const productService = {
+    getProducts: async (params) => {
+        const response = await api.get('/products', { params });
+        return response.data;
+    },
+
+    getProduct: async (id) => {
+        const response = await api.get(`/products/${id}`);
+        return response.data;
+    },
+
+    getProductReviews: async (id, params) => {
+        const response = await api.get(`/products/${id}/reviews`, { params });
+        return response.data;
+    },
+};
+
+export const customerService = {
+    // Cart
+    getCart: async () => {
+        const response = await api.get('/customer/cart');
+        return response.data;
+    },
+
+    addToCart: async (data) => {
+        const response = await api.post('/customer/cart', data);
+        return response.data;
+    },
+
+    updateCartItem: async (itemId, data) => {
+        const response = await api.put(`/customer/cart/${itemId}`, data);
+        return response.data;
+    },
+
+    removeFromCart: async (itemId) => {
+        const response = await api.delete(`/customer/cart/${itemId}`);
+        return response.data;
+    },
+
+    // Wishlist
+    getWishlist: async () => {
+        const response = await api.get('/customer/wishlist');
+        return response.data;
+    },
+
+    addToWishlist: async (productId) => {
+        const response = await api.post('/customer/wishlist', { productId });
+        return response.data;
+    },
+
+    removeFromWishlist: async (itemId) => {
+        const response = await api.delete(`/customer/wishlist/${itemId}`);
+        return response.data;
+    },
+
+    // Orders
+    createOrder: async (orderData) => {
+        const response = await api.post('/customer/orders', orderData);
+        return response.data;
+    },
+
+    getOrders: async (params) => {
+        const response = await api.get('/customer/orders', { params });
+        return response.data;
+    },
+
+    // Reviews
+    createReview: async (reviewData) => {
+        const response = await api.post('/customer/reviews', reviewData);
+        return response.data;
+    },
+};
+
+export const storeAdminService = {
+    registerStore: async (storeData) => {
+        const response = await api.post('/store-admin/register', storeData);
+        return response.data;
+    },
+
+    getDashboard: async () => {
+        const response = await api.get('/store-admin/dashboard');
+        return response.data;
+    },
+
+    updateProfile: async (data) => {
+        const response = await api.put('/store-admin/profile', data);
+        return response.data;
+    },
+
+    getAnalytics: async () => {
+        const response = await api.get('/store-admin/analytics');
+        return response.data;
+    },
+
+    addManager: async (managerData) => {
+        const response = await api.post('/store-admin/managers', managerData);
+        return response.data;
+    },
+
+    getManagers: async () => {
+        const response = await api.get('/store-admin/managers');
+        return response.data;
+    },
+
+    // Product Management
+    createProduct: async (productData) => {
+        const response = await api.post('/store-admin/products', productData);
+        return response.data;
+    },
+
+    getProducts: async (params) => {
+        const response = await api.get('/store-admin/products', { params });
+        return response.data;
+    },
+
+    getProduct: async (id) => {
+        const response = await api.get(`/store-admin/products/${id}`);
+        return response.data;
+    },
+
+    updateProduct: async (id, productData) => {
+        const response = await api.put(`/store-admin/products/${id}`, productData);
+        return response.data;
+    },
+
+    deleteProduct: async (id) => {
+        const response = await api.delete(`/store-admin/products/${id}`);
+        return response.data;
+    },
+
+    // Order Management
+    getOrders: async (params) => {
+        const response = await api.get('/store-admin/orders', { params });
+        return response.data;
+    },
+
+    getOrder: async (id) => {
+        const response = await api.get(`/store-admin/orders/${id}`);
+        return response.data;
+    },
+
+    updateOrderStatus: async (id, status) => {
+        const response = await api.patch(`/store-admin/orders/${id}/status`, { status });
+        return response.data;
+    },
+};
+
+export const storeManagerService = {
+    getProducts: async (params) => {
+        const response = await api.get('/store-manager/products', { params });
+        return response.data;
+    },
+
+    createProduct: async (formData) => {
+        const response = await api.post('/store-manager/products', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        return response.data;
+    },
+
+    updateProduct: async (productId, formData) => {
+        const response = await api.put(`/store-manager/products/${productId}`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        return response.data;
+    },
+
+    deleteProduct: async (productId) => {
+        const response = await api.delete(`/store-manager/products/${productId}`);
+        return response.data;
+    },
+
+    getOrders: async (params) => {
+        const response = await api.get('/store-manager/orders', { params });
+        return response.data;
+    },
+
+    updateOrderStatus: async (orderId, data) => {
+        const response = await api.put(`/store-manager/orders/${orderId}/status`, data);
+        return response.data;
+    },
+};
+
+export const superAdminService = {
+    getDashboard: async () => {
+        const response = await api.get('/superadmin/dashboard');
+        return response.data;
+    },
+
+    getStoreRequests: async (params) => {
+        const response = await api.get('/superadmin/stores/requests', { params });
+        return response.data;
+    },
+
+    approveStore: async (storeId) => {
+        const response = await api.put(`/superadmin/stores/${storeId}/approve`);
+        return response.data;
+    },
+
+    rejectStore: async (storeId, reason) => {
+        const response = await api.put(`/superadmin/stores/${storeId}/reject`, { reason });
+        return response.data;
+    },
+
+    getAllStores: async (params) => {
+        const response = await api.get('/superadmin/stores', { params });
+        return response.data;
+    },
+
+    getAllUsers: async (params) => {
+        const response = await api.get('/superadmin/users', { params });
+        return response.data;
+    },
+};
