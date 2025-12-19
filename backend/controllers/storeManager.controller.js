@@ -2,6 +2,50 @@ const Product = require('../models/Product');
 const Order = require('../models/Order');
 const { uploadToGridFS, deleteFromGridFS } = require('../utils/fileUpload');
 
+// @desc    Get store manager dashboard stats
+// @route   GET /api/store-manager/dashboard
+// @access  Private/StoreManager
+const getDashboard = async (req, res, next) => {
+    try {
+        const storeId = req.user.storeId;
+
+        // Parallel fetch for potential performance boost
+        const [
+            totalProducts,
+            totalOrders,
+            pendingOrders,
+            recentOrders,
+            lowStockProducts
+        ] = await Promise.all([
+            Product.countDocuments({ store: storeId }),
+            Order.countDocuments({ store: storeId }),
+            Order.countDocuments({ store: storeId, status: 'processing' }), // Assuming 'processing' as pending
+            Order.find({ store: storeId })
+                .sort({ createdAt: -1 })
+                .limit(5)
+                .populate('customer', 'name email'),
+            Product.find({ store: storeId, stock: { $lte: 5 } }) // Simple low stock check
+                .limit(5)
+                .select('name stock images')
+        ]);
+
+        res.json({
+            success: true,
+            data: {
+                stats: {
+                    totalProducts,
+                    totalOrders,
+                    pendingOrders,
+                },
+                recentOrders,
+                lowStockProducts
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 // @desc    Get all products for manager's store
 // @route   GET /api/store-manager/products
 // @access  Private/StoreManager
@@ -227,6 +271,7 @@ const updateOrderStatus = async (req, res, next) => {
 };
 
 module.exports = {
+    getDashboard,
     getProducts,
     createProduct,
     updateProduct,

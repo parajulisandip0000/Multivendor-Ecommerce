@@ -132,6 +132,18 @@ export const storeAdminService = {
         const response = await api.get('/store-admin/managers');
         return response.data;
     },
+    updateManager: async (id, data) => {
+        const response = await api.put(`/store-admin/managers/${id}`, data);
+        return response.data;
+    },
+    deleteManager: async (id) => {
+        const response = await api.delete(`/store-admin/managers/${id}`);
+        return response.data;
+    },
+    toggleManagerStatus: async (id, isActive) => {
+        const response = await api.patch(`/store-admin/managers/${id}/status`, { isActive });
+        return response.data;
+    },
 
     // Product Management
     createProduct: async (productData) => {
@@ -177,6 +189,11 @@ export const storeAdminService = {
 };
 
 export const storeManagerService = {
+    getDashboard: async () => {
+        const response = await api.get('/store-manager/dashboard');
+        return response.data;
+    },
+
     getProducts: async (params) => {
         const response = await api.get('/store-manager/products', { params });
         return response.data;

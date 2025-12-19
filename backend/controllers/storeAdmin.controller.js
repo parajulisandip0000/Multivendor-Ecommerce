@@ -602,6 +602,143 @@ const getAnalytics = async (req, res, next) => {
                 topProducts: topProducts
             }
         });
+
+
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Update store manager
+// @route   PUT /api/store-admin/managers/:id
+// @access  Private/StoreAdmin
+const updateManager = async (req, res, next) => {
+    try {
+        const { name, email, phone, password } = req.body;
+        const managerId = req.params.id;
+
+        const store = await resolveStoreForAdmin(req.user);
+        if (!store) {
+            return res.status(404).json({
+                success: false,
+                message: 'Store not found',
+            });
+        }
+
+        // Verify manager belongs to this store
+        if (!store.managers.includes(managerId)) {
+            return res.status(404).json({
+                success: false,
+                message: 'Manager not found in this store',
+            });
+        }
+
+        const manager = await User.findById(managerId);
+        if (!manager) {
+            return res.status(404).json({
+                success: false,
+                message: 'Manager user not found',
+            });
+        }
+
+        manager.name = name || manager.name;
+        manager.email = email || manager.email;
+        manager.phone = phone || manager.phone;
+        if (password) {
+            manager.password = password;
+        }
+
+        await manager.save();
+
+        res.json({
+            success: true,
+            message: 'Manager updated successfully',
+            data: manager,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Delete store manager
+// @route   DELETE /api/store-admin/managers/:id
+// @access  Private/StoreAdmin
+const deleteManager = async (req, res, next) => {
+    try {
+        const managerId = req.params.id;
+
+        const store = await resolveStoreForAdmin(req.user);
+        if (!store) {
+            return res.status(404).json({
+                success: false,
+                message: 'Store not found',
+            });
+        }
+
+        // Verify manager belongs to this store
+        if (!store.managers.includes(managerId)) {
+            return res.status(404).json({
+                success: false,
+                message: 'Manager not found in this store',
+            });
+        }
+
+        // Remove from store's managers array
+        store.managers = store.managers.filter(id => id.toString() !== managerId);
+        await store.save();
+
+        // Delete the user
+        await User.findByIdAndDelete(managerId);
+
+        res.json({
+            success: true,
+            message: 'Manager deleted successfully',
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Toggle manager status (active/inactive)
+// @route   PATCH /api/store-admin/managers/:id/status
+// @access  Private/StoreAdmin
+const toggleManagerStatus = async (req, res, next) => {
+    try {
+        const managerId = req.params.id;
+        const { isActive } = req.body; // Expect boolean
+
+        const store = await resolveStoreForAdmin(req.user);
+        if (!store) {
+            return res.status(404).json({
+                success: false,
+                message: 'Store not found',
+            });
+        }
+
+        // Verify manager belongs to this store
+        if (!store.managers.includes(managerId)) {
+            return res.status(404).json({
+                success: false,
+                message: 'Manager not found in this store',
+            });
+        }
+
+        const manager = await User.findById(managerId);
+        if (!manager) {
+            return res.status(404).json({
+                success: false,
+                message: 'Manager user not found',
+            });
+        }
+
+        manager.isActive = isActive;
+        await manager.save();
+
+        res.json({
+            success: true,
+            message: `Manager ${isActive ? 'activated' : 'deactivated'} successfully`,
+            data: manager,
+        });
     } catch (error) {
         next(error);
     }
@@ -613,6 +750,9 @@ module.exports = {
     updateProfile,
     addManager,
     getManagers,
+    updateManager,
+    deleteManager,
+    toggleManagerStatus,
     createProduct,
     getProducts,
     getProduct,

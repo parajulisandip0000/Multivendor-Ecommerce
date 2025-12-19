@@ -6,6 +6,9 @@ const {
     updateProfile,
     addManager,
     getManagers,
+    updateManager,
+    deleteManager,
+    toggleManagerStatus,
     createProduct,
     getProducts,
     getProduct,
@@ -30,6 +33,9 @@ router.put('/profile', upload.fields([
 ]), updateProfile);
 router.post('/managers', addManager);
 router.get('/managers', getManagers);
+router.put('/managers/:id', updateManager);
+router.delete('/managers/:id', deleteManager);
+router.patch('/managers/:id/status', toggleManagerStatus);
 
 // Product Management
 router.post('/products', upload.array('images', 5), createProduct);

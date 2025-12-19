@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const {
+    getDashboard,
     getProducts,
     createProduct,
     updateProduct,
@@ -14,6 +15,7 @@ const { upload } = require('../utils/fileUpload');
 // All routes require store_manager or store_admin role
 router.use(protect, authorize('store_manager', 'store_admin'));
 
+router.get('/dashboard', getDashboard);
 router.get('/products', getProducts);
 router.post('/products', upload.array('images', 5), createProduct);
 router.put('/products/:productId', upload.array('images', 5), updateProduct);
