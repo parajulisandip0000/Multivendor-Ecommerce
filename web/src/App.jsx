@@ -37,6 +37,12 @@ import RegisterStorePage from './pages/seller/RegisterStorePage';
 // Admin Pages
 import SuperAdminDashboard from './pages/admin/SuperAdminDashboard';
 import StoreRequestsPage from './pages/admin/StoreRequestsPage';
+import AdminStoresPage from './pages/admin/AdminStoresPage';
+import AdminUsersPage from './pages/admin/AdminUsersPage';
+import AdminProductsPage from './pages/admin/AdminProductsPage';
+import AdminLogsPage from './pages/admin/AdminLogsPage';
+import PlatformSettingsPage from './pages/admin/PlatformSettingsPage';
+import AdminAnalyticsPage from './pages/admin/AdminAnalyticsPage';
 import StoreAdminDashboard from './pages/admin/StoreAdminDashboard';
 import StoreManagerDashboard from './pages/admin/StoreManagerDashboard';
 import ProductManagementPage from './pages/admin/ProductManagementPage';
@@ -203,6 +209,54 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={['superadmin']}>
             <StoreRequestsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/stores"
+        element={
+          <ProtectedRoute allowedRoles={['superadmin']}>
+            <AdminStoresPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/users"
+        element={
+          <ProtectedRoute allowedRoles={['superadmin']}>
+            <AdminUsersPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/products"
+        element={
+          <ProtectedRoute allowedRoles={['superadmin']}>
+            <AdminProductsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/logs"
+        element={
+          <ProtectedRoute allowedRoles={['superadmin']}>
+            <AdminLogsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/analytics"
+        element={
+          <ProtectedRoute allowedRoles={['superadmin']}>
+            <AdminAnalyticsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/settings"
+        element={
+          <ProtectedRoute allowedRoles={['superadmin']}>
+            <PlatformSettingsPage />
           </ProtectedRoute>
         }
       />

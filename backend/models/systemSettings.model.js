@@ -1,32 +1,37 @@
 const mongoose = require('mongoose');
 
-const systemSettingsSchema = new mongoose.Schema({
-    rateLimiting: {
-        enabled: {
-            type: Boolean,
-            default: true
+const systemSettingsSchema = new mongoose.Schema(
+    {
+        rateLimiting: {
+            windowMs: {
+                type: Number,
+                default: 15 * 60 * 1000, // 15 minutes
+            },
+            max: {
+                type: Number,
+                default: 100, // limit each IP to 100 requests per windowMs
+            },
+            message: {
+                type: String,
+                default: 'Too many requests from this IP, please try again after 15 minutes',
+            },
         },
-        windowMs: {
-            type: Number,
-            default: 15 * 60 * 1000 // 15 minutes
+        updatedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
         },
-        max: {
-            type: Number,
-            default: 100 // limit each IP to 100 requests per windowMs
-        }
     },
-    updatedBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
+    {
+        timestamps: true,
     }
-}, {
-    timestamps: true
-});
+);
 
-// Singleton pattern - ensure only one settings document exists
+// Singleton pattern: ensure only one settings document exists
 systemSettingsSchema.statics.getSettings = async function () {
     const settings = await this.findOne();
-    if (settings) return settings;
+    if (settings) {
+        return settings;
+    }
     return await this.create({});
 };
 
