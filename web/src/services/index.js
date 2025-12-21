@@ -255,8 +255,43 @@ export const superAdminService = {
         return response.data;
     },
 
+    updateStoreStatus: async (storeId, status) => {
+        const response = await api.put(`/superadmin/stores/${storeId}/status`, { status });
+        return response.data;
+    },
+
     getAllUsers: async (params) => {
         const response = await api.get('/superadmin/users', { params });
+        return response.data;
+    },
+
+    updateUserStatus: async (userId, isActive) => {
+        const response = await api.put(`/superadmin/users/${userId}/status`, { isActive });
+        return response.data;
+    },
+
+    getAllProducts: async (params) => {
+        const response = await api.get('/superadmin/products', { params });
+        return response.data;
+    },
+
+    deleteProduct: async (productId) => {
+        const response = await api.delete(`/superadmin/products/${productId}`);
+        return response.data;
+    },
+
+    getSystemLogs: async (params) => {
+        const response = await api.get('/superadmin/logs', { params });
+        return response.data;
+    },
+
+    getSystemSettings: async () => {
+        const response = await api.get('/superadmin/settings');
+        return response.data;
+    },
+
+    updateSystemSettings: async (data) => {
+        const response = await api.put('/superadmin/settings', data);
         return response.data;
     },
 };
