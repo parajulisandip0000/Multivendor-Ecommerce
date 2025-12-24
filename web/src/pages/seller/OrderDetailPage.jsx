@@ -170,7 +170,7 @@ const OrderDetailPage = () => {
                             </h2>
                             <div className="flex items-center gap-3 mb-4">
                                 <img
-                                    src={currentOrder.customer?.avatar || 'https://via.placeholder.com/150'}
+                                    src={currentOrder.customer?.avatar || '/avatar-placeholder.svg'}
                                     alt="Customer"
                                     className="w-12 h-12 rounded-full border border-gray-200"
                                 />

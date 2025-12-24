@@ -52,7 +52,7 @@ const SellerDashboardLayout = ({ children }) => {
                     <span className="font-bold text-lg text-gray-900">Seller Panel</span>
                 </div>
                 <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden">
-                    <img src={user?.avatar || 'https://via.placeholder.com/150'} alt="Profile" className="w-full h-full object-cover" />
+                    <img src={user?.avatar || '/avatar-placeholder.svg'} alt="Profile" className="w-full h-full object-cover" />
                 </div>
             </div>
 
@@ -104,7 +104,7 @@ const SellerDashboardLayout = ({ children }) => {
                         <div className="p-4 border-t border-gray-200 bg-gray-50">
                             <div className="flex items-center gap-3 mb-4 px-2">
                                 <div className="w-10 h-10 rounded-full bg-white border border-gray-200 overflow-hidden">
-                                    <img src={user?.avatar || 'https://via.placeholder.com/150'} alt={user?.name} className="w-full h-full object-cover" />
+                                    <img src={user?.avatar || '/avatar-placeholder.svg'} alt={user?.name} className="w-full h-full object-cover" />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-semibold text-gray-900 truncate">{user?.name}</p>

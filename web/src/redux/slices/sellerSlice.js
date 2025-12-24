@@ -11,6 +11,12 @@ export const fetchDashboard = createAsyncThunk(
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch dashboard');
         }
+    },
+    {
+        condition: (_, { getState }) => {
+            const state = getState();
+            return !state.seller.loading;
+        },
     }
 );
 
