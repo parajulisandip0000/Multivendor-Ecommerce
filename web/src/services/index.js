@@ -46,6 +46,18 @@ export const productService = {
     },
 };
 
+export const storeService = {
+    getStore: async (storeId) => {
+        const response = await api.get(`/stores/${storeId}`);
+        return response.data;
+    },
+
+    getStoreProducts: async (storeId, params) => {
+        const response = await api.get(`/stores/${storeId}/products`, { params });
+        return response.data;
+    },
+};
+
 export const customerService = {
     // Cart
     getCart: async () => {
@@ -98,6 +110,67 @@ export const customerService = {
     // Reviews
     createReview: async (reviewData) => {
         const response = await api.post('/customer/reviews', reviewData);
+        return response.data;
+    },
+};
+
+export const chatService = {
+    listConversations: async (params) => {
+        const response = await api.get('/chat/conversations', { params });
+        return response.data;
+    },
+
+    getConversation: async (conversationId) => {
+        const response = await api.get(`/chat/conversations/${conversationId}`);
+        return response.data;
+    },
+
+    listMessages: async (conversationId, params) => {
+        const response = await api.get(`/chat/conversations/${conversationId}/messages`, { params });
+        return response.data;
+    },
+
+    sendMessage: async (conversationId, text) => {
+        const response = await api.post(`/chat/conversations/${conversationId}/messages`, { text });
+        return response.data;
+    },
+
+    markRead: async (conversationId) => {
+        const response = await api.post(`/chat/conversations/${conversationId}/read`);
+        return response.data;
+    },
+
+    // Customer starts a store chat
+    createStoreChat: async (storeId) => {
+        const response = await api.post(`/chat/store/${storeId}/message`);
+        return response.data;
+    },
+
+    // Store staff starts a customer chat
+    createCustomerChat: async (storeId, customerId) => {
+        const response = await api.post(`/chat/store/${storeId}/customer/${customerId}/message`);
+        return response.data;
+    },
+
+    // SuperAdmin starts chat with store admin
+    createSupportChatWithStoreAdmin: async (storeAdminId) => {
+        const response = await api.post(`/chat/support/store-admin/${storeAdminId}`);
+        return response.data;
+    },
+
+    // Store admin starts chat with manager
+    createInternalChatWithManager: async (managerId) => {
+        const response = await api.post(`/chat/internal/manager/${managerId}`);
+        return response.data;
+    },
+
+    createInternalChatWithStoreAdmin: async () => {
+        const response = await api.post('/chat/internal/store-admin');
+        return response.data;
+    },
+
+    searchStores: async (q) => {
+        const response = await api.get('/chat/stores/search', { params: { q } });
         return response.data;
     },
 };

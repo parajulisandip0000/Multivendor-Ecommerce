@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { FiHome, FiShoppingBag, FiBox, FiLogOut, FiMenu, FiX } from 'react-icons/fi';
+import { FiHome, FiShoppingBag, FiBox, FiLogOut, FiMenu, FiX, FiMessageCircle } from 'react-icons/fi';
 import { logout } from '../redux/slices/authSlice';
 import { toast } from 'react-toastify';
 
@@ -14,6 +14,7 @@ const StoreManagerLayout = ({ children }) => {
 
     const menuItems = [
         { path: '/store-manager/dashboard', icon: FiHome, label: 'Overview' },
+        { path: '/store-manager/chat', icon: FiMessageCircle, label: 'Chat' },
         { path: '/store-manager/products', icon: FiBox, label: 'Products' },
         { path: '/store-manager/orders', icon: FiShoppingBag, label: 'Orders' },
     ];

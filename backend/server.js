@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const http = require('http');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
@@ -7,6 +8,7 @@ const rateLimit = require('express-rate-limit');
 const connectDB = require('./config/database');
 const errorHandler = require('./middleware/error.middleware');
 const { initGridFS } = require('./utils/fileUpload');
+const { initSocket } = require('./utils/socket');
 
 const app = express();
 
@@ -80,7 +82,9 @@ app.use('/api/store-admin', require('./routes/storeAdmin.routes'));
 app.use('/api/store-manager', require('./routes/storeManager.routes'));
 app.use('/api/customer', require('./routes/customer.routes'));
 app.use('/api/products', require('./routes/product.routes'));
+app.use('/api/stores', require('./routes/store.routes'));
 app.use('/api/files', require('./routes/file.routes'));
+app.use('/api/chat', require('./routes/chat.routes'));
 
 // Health check
 app.get('/health', (req, res) => {
@@ -103,8 +107,9 @@ app.use((req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-
-app.listen(PORT, () => {
+const server = http.createServer(app);
+initSocket(server);
+server.listen(PORT, () => {
     console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
 });
 

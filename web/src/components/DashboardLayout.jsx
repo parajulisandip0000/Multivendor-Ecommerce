@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { FiHome, FiShoppingBag, FiUser, FiHeart, FiMapPin, FiSettings, FiLogOut, FiMenu, FiX, FiCamera } from 'react-icons/fi';
+import { FiHome, FiShoppingBag, FiUser, FiHeart, FiMapPin, FiSettings, FiLogOut, FiMenu, FiX, FiCamera, FiMessageCircle } from 'react-icons/fi';
 import { logout, updateUserAvatar } from '../redux/slices/authSlice';
 import { authService } from '../services';
 import { toast } from 'react-toastify';
@@ -17,6 +17,7 @@ const DashboardLayout = ({ children }) => {
 
     const menuItems = [
         { path: '/dashboard', icon: FiHome, label: 'Dashboard' },
+        { path: '/chat', icon: FiMessageCircle, label: 'Messages' },
         { path: '/orders', icon: FiShoppingBag, label: 'My Orders' },
         { path: '/profile', icon: FiUser, label: 'Profile' },
         { path: '/wishlist', icon: FiHeart, label: 'Wishlist' },

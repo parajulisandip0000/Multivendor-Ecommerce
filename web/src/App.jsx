@@ -7,6 +7,7 @@ import { loadUser } from './redux/slices/authSlice';
 import HomePage from './pages/customer/HomePage';
 import ProductListPage from './pages/customer/ProductListPage';
 import ProductDetailPage from './pages/customer/ProductDetailPage';
+import StorePage from './pages/customer/StorePage';
 import CartPage from './pages/customer/CartPage';
 import WishlistPage from './pages/customer/WishlistPage';
 import CheckoutPage from './pages/customer/CheckoutPage';
@@ -16,6 +17,10 @@ import CustomerDashboard from './pages/customer/CustomerDashboard';
 import ProfilePage from './pages/customer/ProfilePage';
 import AddressesPage from './pages/customer/AddressesPage';
 import SettingsPage from './pages/customer/SettingsPage';
+import CustomerChatPage from './pages/chat/CustomerChatPage';
+import SellerChatPage from './pages/chat/SellerChatPage';
+import StoreManagerChatPage from './pages/chat/StoreManagerChatPage';
+import SuperAdminChatPage from './pages/chat/SuperAdminChatPage';
 
 // Auth Pages
 import LoginPage from './pages/auth/LoginPage';
@@ -108,6 +113,7 @@ function App() {
       <Route path="/" element={<HomePage />} />
       <Route path="/products" element={<ProductListPage />} />
       <Route path="/products/:id" element={<ProductDetailPage />} />
+      <Route path="/stores/:id" element={<StorePage />} />
       <Route path="/login" element={
         <GuestRoute>
           <LoginPage />
@@ -194,6 +200,14 @@ function App() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/chat"
+        element={
+          <ProtectedRoute allowedRoles={['customer']}>
+            <CustomerChatPage />
+          </ProtectedRoute>
+        }
+      />
 
       {/* SuperAdmin Routes */}
       <Route
@@ -201,6 +215,14 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={['superadmin']}>
             <SuperAdminDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/chat"
+        element={
+          <ProtectedRoute allowedRoles={['superadmin']}>
+            <SuperAdminChatPage />
           </ProtectedRoute>
         }
       />
@@ -296,6 +318,14 @@ function App() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/store-manager/chat"
+        element={
+          <ProtectedRoute allowedRoles={['store_manager', 'store_admin']}>
+            <StoreManagerChatPage />
+          </ProtectedRoute>
+        }
+      />
 
       {/* Seller Routes */}
       <Route
@@ -376,6 +406,14 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={['store_admin']}>
             <ManagersPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/seller/chat"
+        element={
+          <ProtectedRoute allowedRoles={['store_admin']}>
+            <SellerChatPage />
           </ProtectedRoute>
         }
       />

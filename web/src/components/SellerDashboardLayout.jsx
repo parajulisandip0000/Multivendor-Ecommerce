@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { FiHome, FiShoppingBag, FiBox, FiSettings, FiLogOut, FiMenu, FiX, FiPieChart, FiUsers } from 'react-icons/fi';
+import { FiHome, FiShoppingBag, FiBox, FiSettings, FiLogOut, FiMenu, FiX, FiPieChart, FiUsers, FiMessageCircle } from 'react-icons/fi';
 import { logout } from '../redux/slices/authSlice';
 import { toast } from 'react-toastify';
 import { fetchDashboard } from '../redux/slices/sellerSlice'; // To preload store info
@@ -23,6 +23,7 @@ const SellerDashboardLayout = ({ children }) => {
 
     const menuItems = [
         { path: '/seller/dashboard', icon: FiHome, label: 'Overview' },
+        { path: '/seller/chat', icon: FiMessageCircle, label: 'Chat' },
         { path: '/seller/products', icon: FiBox, label: 'Products' },
         { path: '/seller/orders', icon: FiShoppingBag, label: 'Orders' },
         { path: '/seller/analytics', icon: FiPieChart, label: 'Analytics' },

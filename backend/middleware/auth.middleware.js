@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const Store = require('../models/Store');
 
 // Verify JWT token
 const protect = async (req, res, next) => {
@@ -31,6 +32,12 @@ const protect = async (req, res, next) => {
                     success: false,
                     message: 'User account is deactivated',
                 });
+            }
+
+            // Ensure store_admin has storeId hydrated (some flows rely on it)
+            if (req.user.role === 'store_admin' && !req.user.storeId) {
+                const store = await Store.findOne({ owner: req.user._id }).select('_id');
+                if (store) req.user.storeId = store._id;
             }
 
             next();

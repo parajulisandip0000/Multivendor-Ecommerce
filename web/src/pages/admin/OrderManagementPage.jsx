@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { storeManagerService } from '../../services';
 import StoreManagerLayout from '../../components/StoreManagerLayout';
-import { FiSearch, FiFilter, FiCheck, FiX, FiRefreshCw } from 'react-icons/fi';
+import { FiSearch, FiFilter, FiCheck, FiX, FiRefreshCw, FiMessageCircle } from 'react-icons/fi';
 import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
 
 const OrderManagementPage = () => {
+    const navigate = useNavigate();
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
@@ -132,17 +134,29 @@ const OrderManagementPage = () => {
                                             <StatusBadge status={order.status} />
                                         </td>
                                         <td className="px-6 py-4">
-                                            <select
-                                                value={order.status}
-                                                onChange={(e) => handleStatusUpdate(order._id, e.target.value)}
-                                                className="text-sm border-gray-300 rounded shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                                            >
-                                                <option value="pending">Pending</option>
-                                                <option value="processing">Processing</option>
-                                                <option value="shipped">Shipped</option>
-                                                <option value="delivered">Delivered</option>
-                                                <option value="cancelled">Cancelled</option>
-                                            </select>
+                                            <div className="flex items-center gap-2">
+                                                <select
+                                                    value={order.status}
+                                                    onChange={(e) => handleStatusUpdate(order._id, e.target.value)}
+                                                    className="text-sm border-gray-300 rounded shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                                                >
+                                                    <option value="pending">Pending</option>
+                                                    <option value="processing">Processing</option>
+                                                    <option value="shipped">Shipped</option>
+                                                    <option value="delivered">Delivered</option>
+                                                    <option value="cancelled">Cancelled</option>
+                                                </select>
+                                                {order.customer?._id && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => navigate(`/store-manager/chat?customerId=${order.customer._id}`)}
+                                                        className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-700"
+                                                        title="Message customer"
+                                                    >
+                                                        <FiMessageCircle className="w-4 h-4" />
+                                                    </button>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 ))

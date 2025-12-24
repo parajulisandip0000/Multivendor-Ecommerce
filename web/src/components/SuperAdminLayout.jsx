@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { FiHome, FiShoppingBag, FiUsers, FiSettings, FiLogOut, FiMenu, FiX, FiShield, FiInbox, FiBox, FiTrendingUp } from 'react-icons/fi';
+import { FiHome, FiShoppingBag, FiUsers, FiSettings, FiLogOut, FiMenu, FiX, FiShield, FiInbox, FiBox, FiTrendingUp, FiMessageCircle } from 'react-icons/fi';
 import { logout } from '../redux/slices/authSlice';
 import { toast } from 'react-toastify';
 
@@ -14,6 +14,7 @@ const SuperAdminLayout = ({ children }) => {
 
     const menuItems = [
         { path: '/admin/dashboard', icon: FiHome, label: 'Dashboard' },
+        { path: '/admin/chat', icon: FiMessageCircle, label: 'Chat' },
         { path: '/admin/store-requests', icon: FiInbox, label: 'Store Requests' },
         { path: '/admin/stores', icon: FiShoppingBag, label: 'All Stores' },
         { path: '/admin/users', icon: FiUsers, label: 'Users' },

@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { storeAdminService } from '../../services';
 import SellerDashboardLayout from '../../components/SellerDashboardLayout';
-import { FiUsers, FiPlus, FiTrash2, FiX, FiCheck, FiEdit2, FiAlertTriangle } from 'react-icons/fi';
+import { FiUsers, FiPlus, FiTrash2, FiX, FiCheck, FiEdit2, FiAlertTriangle, FiMessageCircle } from 'react-icons/fi';
 import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
 
 const ManagersPage = () => {
+    const navigate = useNavigate();
     const [managers, setManagers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -119,6 +121,10 @@ const ManagersPage = () => {
         }
     };
 
+    const openChatWithManager = (manager) => {
+        navigate(`/seller/chat?managerId=${manager._id}`);
+    };
+
     return (
         <SellerDashboardLayout>
             <div className="flex justify-between items-center mb-6">
@@ -178,6 +184,13 @@ const ManagersPage = () => {
                                             </button>
                                         </td>
                                         <td className="px-6 py-4 text-right flex justify-end gap-2">
+                                            <button
+                                                onClick={() => openChatWithManager(manager)}
+                                                className="text-primary-600 hover:text-primary-800 p-2 hover:bg-primary-50 rounded-lg transition-colors"
+                                                title="Message Manager"
+                                            >
+                                                <FiMessageCircle className="w-4 h-4" />
+                                            </button>
                                             <button
                                                 onClick={() => openEditModal(manager)}
                                                 className="text-blue-600 hover:text-blue-800 p-2 hover:bg-blue-50 rounded-lg transition-colors"

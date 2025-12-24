@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { FiShoppingBag, FiClock, FiHeart, FiPackage, FiTrendingUp, FiArrowRight, FiEye } from 'react-icons/fi';
+import { FiShoppingBag, FiClock, FiHeart, FiPackage, FiTrendingUp, FiArrowRight, FiEye, FiMessageCircle } from 'react-icons/fi';
 import DashboardLayout from '../../components/DashboardLayout';
 
 const CustomerDashboard = () => {
@@ -156,7 +156,7 @@ const CustomerDashboard = () => {
                 {/* Quick Actions */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                     <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <Link
                             to="/products"
                             className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-all group"
@@ -167,6 +167,20 @@ const CustomerDashboard = () => {
                             <div className="flex-1">
                                 <p className="font-semibold text-gray-900">Browse Products</p>
                                 <p className="text-sm text-gray-500">Explore our catalog</p>
+                            </div>
+                            <FiArrowRight className="w-5 h-5 text-gray-400 group-hover:text-primary-600" />
+                        </Link>
+
+                        <Link
+                            to="/chat"
+                            className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-all group"
+                        >
+                            <div className="bg-primary-100 p-3 rounded-lg group-hover:bg-primary-200 transition-colors">
+                                <FiMessageCircle className="w-6 h-6 text-primary-600" />
+                            </div>
+                            <div className="flex-1">
+                                <p className="font-semibold text-gray-900">Messages</p>
+                                <p className="text-sm text-gray-500">Chat with stores</p>
                             </div>
                             <FiArrowRight className="w-5 h-5 text-gray-400 group-hover:text-primary-600" />
                         </Link>

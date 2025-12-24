@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useParams, useNavigate } from 'react-router-dom';
 import { fetchSellerOrderDetails, updateSellerOrderStatus, clearCurrentOrder } from '../../redux/slices/sellerSlice';
 import SellerDashboardLayout from '../../components/SellerDashboardLayout';
-import { FiArrowLeft, FiUser, FiMapPin, FiCreditCard, FiPackage, FiClock } from 'react-icons/fi';
+import { FiArrowLeft, FiUser, FiMapPin, FiCreditCard, FiPackage, FiClock, FiMessageCircle } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 
 const OrderDetailPage = () => {
@@ -179,6 +179,16 @@ const OrderDetailPage = () => {
                                     <p className="text-sm text-gray-500">{currentOrder.customer?.email}</p>
                                 </div>
                             </div>
+                            {currentOrder.customer?._id && (
+                                <button
+                                    type="button"
+                                    onClick={() => navigate(`/seller/chat?customerId=${currentOrder.customer._id}`)}
+                                    className="w-full mt-2 px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 flex items-center justify-center gap-2"
+                                >
+                                    <FiMessageCircle />
+                                    Message customer
+                                </button>
+                            )}
                             {currentOrder.customer?.phone && (
                                 <p className="text-sm text-gray-600 mb-2">Phone: {currentOrder.customer.phone}</p>
                             )}
