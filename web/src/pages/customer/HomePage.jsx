@@ -202,6 +202,9 @@ const HomePage = () => {
                             title="Trending Now"
                             products={trendingProducts}
                             viewAllLink="/products?sort=trending"
+                            cardWidthClassName="w-52"
+                            cardSize="sm"
+                            cardActionButtons="cart"
                         />
                     </div>
                 </section>
@@ -238,6 +241,9 @@ const HomePage = () => {
                             title="New Arrivals"
                             products={newArrivals}
                             viewAllLink="/products?sort=newest"
+                            cardWidthClassName="w-52"
+                            cardSize="sm"
+                            cardActionButtons="cart"
                         />
                     </div>
                 </section>
@@ -257,15 +263,15 @@ const HomePage = () => {
                     </div>
 
                     {loading ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
                             {[...Array(8)].map((_, i) => (
-                                <div key={i} className="bg-gray-200 rounded-xl h-96 animate-pulse"></div>
+                                <div key={i} className="bg-gray-200 rounded-xl h-72 animate-pulse"></div>
                             ))}
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
                             {featuredProducts.map((product) => (
-                                <ProductCard key={product._id} product={product} />
+                                <ProductCard key={product._id} product={product} size="sm" actionButtons="cart" />
                             ))}
                         </div>
                     )}

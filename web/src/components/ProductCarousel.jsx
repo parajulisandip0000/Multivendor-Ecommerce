@@ -2,7 +2,14 @@ import { useState, useRef } from 'react';
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import ProductCard from './ProductCard';
 
-const ProductCarousel = ({ title, products, viewAllLink }) => {
+const ProductCarousel = ({
+    title,
+    products,
+    viewAllLink,
+    cardWidthClassName = 'w-64',
+    cardSize = 'md',
+    cardActionButtons = 'details',
+}) => {
     const scrollContainerRef = useRef(null);
     const [showLeftArrow, setShowLeftArrow] = useState(false);
     const [showRightArrow, setShowRightArrow] = useState(true);
@@ -61,12 +68,12 @@ const ProductCarousel = ({ title, products, viewAllLink }) => {
                 {/* Products Container */}
                 <div
                     ref={scrollContainerRef}
-                    className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth"
+                    className="flex gap-3 overflow-x-auto scrollbar-hide scroll-smooth"
                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 >
                     {products.map((product) => (
-                        <div key={product._id} className="flex-none w-64">
-                            <ProductCard product={product} />
+                        <div key={product._id} className={`flex-none ${cardWidthClassName}`}>
+                            <ProductCard product={product} size={cardSize} actionButtons={cardActionButtons} />
                         </div>
                     ))}
                 </div>

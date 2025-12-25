@@ -2,8 +2,11 @@ import { Link } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { FiShoppingCart, FiHeart, FiUser, FiMenu } from 'react-icons/fi';
 import { logout } from '../redux/slices/authSlice';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import ProductSearchBar from './ProductSearchBar';
+import { customerService } from '../services';
+import { setWishlist } from '../redux/slices/wishlistSlice';
+import { setCart } from '../redux/slices/cartSlice';
 
 const Navbar = () => {
     const { isAuthenticated, user } = useSelector((state) => state.auth);
@@ -11,6 +14,28 @@ const Navbar = () => {
     const { items: wishlistItems } = useSelector((state) => state.wishlist);
     const dispatch = useDispatch();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+    useEffect(() => {
+        const hydrateCustomerData = async () => {
+            if (!isAuthenticated || user?.role !== 'customer') return;
+            try {
+                const [wishlistRes, cartRes] = await Promise.all([
+                    customerService.getWishlist(),
+                    customerService.getCart(),
+                ]);
+
+                const wishlist = wishlistRes?.data;
+                dispatch(setWishlist(Array.isArray(wishlist?.items) ? wishlist.items : []));
+
+                const cart = cartRes?.data;
+                dispatch(setCart(Array.isArray(cart?.items) ? cart.items : []));
+            } catch {
+                // ignore hydration errors (e.g., expired session); auth flow will handle it
+            }
+        };
+
+        hydrateCustomerData();
+    }, [dispatch, isAuthenticated, user?.role]);
 
     const handleLogout = () => {
         dispatch(logout());
