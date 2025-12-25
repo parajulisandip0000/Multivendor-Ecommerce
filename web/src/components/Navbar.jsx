@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { FiShoppingCart, FiHeart, FiUser, FiMenu, FiSearch } from 'react-icons/fi';
+import { FiShoppingCart, FiHeart, FiUser, FiMenu } from 'react-icons/fi';
 import { logout } from '../redux/slices/authSlice';
 import { useState } from 'react';
+import ProductSearchBar from './ProductSearchBar';
 
 const Navbar = () => {
     const { isAuthenticated, user } = useSelector((state) => state.auth);
@@ -44,14 +45,9 @@ const Navbar = () => {
 
                     {/* Search Bar - Desktop */}
                     <div className="hidden md:flex items-center flex-1 max-w-2xl mx-8">
-                        <div className="relative w-full">
-                            <input
-                                type="text"
-                                placeholder="Search products..."
-                                className="w-full px-4 py-2 pl-10 pr-4 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                            />
-                            <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                        </div>
+                        <ProductSearchBar
+                            inputClassName="w-full px-4 py-2 pl-10 pr-4 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        />
                     </div>
 
                     {/* Desktop Navigation */}
@@ -142,12 +138,9 @@ const Navbar = () => {
                 <div className="md:hidden bg-white border-t border-gray-200">
                     <div className="px-4 pt-2 pb-4 space-y-3">
                         <div className="relative">
-                            <input
-                                type="text"
-                                placeholder="Search products..."
-                                className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            <ProductSearchBar
+                                inputClassName="w-full px-4 py-2 pl-10 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500"
                             />
-                            <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                         </div>
                         {isAuthenticated ? (
                             <>

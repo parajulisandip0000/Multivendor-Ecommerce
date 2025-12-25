@@ -1,6 +1,8 @@
 const Product = require('../models/Product');
 const Review = require('../models/Review');
 
+const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 // @desc    Get all products (public)
 // @route   GET /api/products
 // @access  Public
@@ -26,7 +28,15 @@ const getProducts = async (req, res, next) => {
             if (maxPrice) query.price.$lte = parseFloat(maxPrice);
         }
         if (search) {
-            query.$text = { $search: search };
+            const q = String(search).trim();
+            if (q) {
+                const safe = escapeRegex(q);
+                query.$or = [
+                    { name: { $regex: safe, $options: 'i' } },
+                    { description: { $regex: safe, $options: 'i' } },
+                    { tags: { $regex: safe, $options: 'i' } },
+                ];
+            }
         }
 
         const products = await Product.find(query)
