@@ -6,7 +6,7 @@ import Footer from '../../components/Footer';
 import ProductCard from '../../components/ProductCard';
 import ProductCarousel from '../../components/ProductCarousel';
 import DealCard from '../../components/DealCard';
-import { FiTrendingUp, FiShoppingBag, FiUsers, FiAward, FiTag, FiClock, FiSmartphone, FiHome, FiTarget, FiBook, FiGrid, FiHeart, FiPackage, FiGift, FiUser, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FiTrendingUp, FiShoppingBag, FiUsers, FiAward, FiTag, FiClock, FiSmartphone, FiHome, FiTarget, FiBook, FiGrid, FiHeart, FiPackage, FiGift, FiUser, FiChevronLeft, FiChevronRight, FiTruck, FiShield } from 'react-icons/fi';
 
 // Hero Slider Component
 const HeroSlider = () => {
@@ -137,9 +137,9 @@ const HomePage = () => {
         try {
             const [featured, trending, newItems, deals] = await Promise.all([
                 productService.getProducts({ limit: 8, sort: '-createdAt' }),
-                productService.getProducts({ limit: 12, sort: '-averageRating' }),
+                productService.getProducts({ limit: 12, sort: '-views' }),
                 productService.getProducts({ limit: 12, sort: '-createdAt' }),
-                productService.getProducts({ limit: 6, sort: '-discount' })
+                productService.getProducts({ limit: 6, sort: '-createdAt' })
             ]);
 
             setFeaturedProducts(featured.data || []);
@@ -157,11 +157,11 @@ const HomePage = () => {
         { name: 'Electronics', icon: FiSmartphone, color: 'bg-slate-100 hover:bg-slate-200', textColor: 'text-slate-700' },
         { name: 'Fashion', icon: FiShoppingBag, color: 'bg-slate-100 hover:bg-slate-200', textColor: 'text-slate-700' },
         { name: 'Home & Garden', icon: FiHome, color: 'bg-slate-100 hover:bg-slate-200', textColor: 'text-slate-700' },
-        { name: 'Sports', icon: FiTarget, color: 'bg-slate-100 hover:bg-slate-200', textColor: 'text-slate-700' },
+        { name: 'Sports & Outdoors', icon: FiTarget, color: 'bg-slate-100 hover:bg-slate-200', textColor: 'text-slate-700' },
         { name: 'Books', icon: FiBook, color: 'bg-slate-100 hover:bg-slate-200', textColor: 'text-slate-700' },
         { name: 'Toys & Games', icon: FiGrid, color: 'bg-slate-100 hover:bg-slate-200', textColor: 'text-slate-700' },
         { name: 'Health & Beauty', icon: FiHeart, color: 'bg-slate-100 hover:bg-slate-200', textColor: 'text-slate-700' },
-        { name: 'More', icon: FiPackage, color: 'bg-slate-100 hover:bg-slate-200', textColor: 'text-slate-700' },
+        { name: 'Other', icon: FiPackage, color: 'bg-slate-100 hover:bg-slate-200', textColor: 'text-slate-700' },
     ];
 
 
@@ -171,6 +171,30 @@ const HomePage = () => {
         { icon: FiUsers, label: 'Customers', value: '50,000+' },
         { icon: FiAward, label: 'Verified Sellers', value: '500+' },
         { icon: FiTrendingUp, label: 'Daily Orders', value: '1,000+' },
+    ];
+
+    const promos = [
+        {
+            title: 'Free Delivery',
+            subtitle: 'On eligible orders',
+            icon: FiTruck,
+            gradient: 'from-sky-600 to-cyan-500',
+            to: '/products',
+        },
+        {
+            title: 'Secure Payments',
+            subtitle: 'Trusted checkout',
+            icon: FiShield,
+            gradient: 'from-emerald-600 to-teal-500',
+            to: '/products',
+        },
+        {
+            title: 'Gift Picks',
+            subtitle: 'Curated for you',
+            icon: FiGift,
+            gradient: 'from-purple-600 to-fuchsia-500',
+            to: '/products',
+        },
     ];
 
     return (
@@ -190,6 +214,34 @@ const HomePage = () => {
                                 <div className="text-3xl font-bold text-gray-900 mb-1">{stat.value}</div>
                                 <div className="text-gray-600">{stat.label}</div>
                             </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* Mini Promos */}
+            <section className="py-10">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                        {promos.map((p) => (
+                            <Link
+                                key={p.title}
+                                to={p.to}
+                                className={`group rounded-2xl bg-gradient-to-r ${p.gradient} text-white p-5 shadow-sm hover:shadow-md transition`}
+                            >
+                                <div className="flex items-center justify-between gap-4">
+                                    <div className="min-w-0">
+                                        <div className="text-lg font-bold">{p.title}</div>
+                                        <div className="text-sm text-white/90 mt-1">{p.subtitle}</div>
+                                        <div className="text-sm font-semibold mt-4 inline-flex items-center gap-2">
+                                            Shop now <span aria-hidden="true">›</span>
+                                        </div>
+                                    </div>
+                                    <div className="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center shrink-0">
+                                        <p.icon className="w-6 h-6" />
+                                    </div>
+                                </div>
+                            </Link>
                         ))}
                     </div>
                 </div>
