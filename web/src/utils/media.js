@@ -50,6 +50,11 @@ export const getFileIdFromImage = (img) => {
 };
 
 export const getPrimaryProductImageUrl = (product) => {
+    const thumb = product?.thumbnail;
+    if (thumb?.url || thumb?.fileId) {
+        return resolveFileUrl(thumb.url || thumb.fileId);
+    }
+
     const images = Array.isArray(product?.images) ? product.images : [];
     const img = images.find((i) => i?.isDefault) || images[0];
     if (!img) return null;

@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { FiArrowLeft, FiEdit2, FiBox } from 'react-icons/fi';
 import SellerDashboardLayout from '../../components/SellerDashboardLayout';
+import ZoomableImage from '../../components/ZoomableImage';
 import { storeAdminService } from '../../services';
 import { getPrimaryProductImageUrl, resolveFileUrl } from '../../utils/media';
 
@@ -74,10 +75,12 @@ const SellerProductDetailPage = () => {
                         <div className="space-y-3">
                             <div className="w-full aspect-square rounded-xl bg-gray-100 border border-gray-200 overflow-hidden">
                                 {selectedImageSrc ? (
-                                    <img
+                                    <ZoomableImage
                                         src={selectedImageSrc}
                                         alt={product.name}
-                                        className="w-full h-full object-cover"
+                                        zoom={2.2}
+                                        className="w-full h-full"
+                                        imgClassName="select-none"
                                     />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center text-gray-400">

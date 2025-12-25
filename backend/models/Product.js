@@ -81,6 +81,16 @@ const productSchema = new mongoose.Schema(
             default: 10,
         },
         // Images stored as GridFS file IDs
+        thumbnail: {
+            fileId: {
+                type: mongoose.Schema.Types.ObjectId,
+                default: null,
+            },
+            url: {
+                type: String,
+                default: null,
+            },
+        },
         images: [
             {
                 fileId: {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FiUpload, FiX, FiSave, FiEdit } from 'react-icons/fi';
+import { FiUpload, FiX, FiSave, FiEdit, FiImage } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import { resolveFileUrl } from '../utils/media';
 
@@ -24,6 +24,9 @@ const ProductForm = ({ initialData, onSubmit, loading, isEdit, onDeleteExistingI
     const [images, setImages] = useState([]);
     const [previewUrls, setPreviewUrls] = useState([]);
     const [existingImages, setExistingImages] = useState([]);
+    const [thumbnail, setThumbnail] = useState(null);
+    const [thumbnailPreview, setThumbnailPreview] = useState(null);
+    const [existingThumbnailSrc, setExistingThumbnailSrc] = useState(null);
 
     useEffect(() => {
         if (initialData) {
@@ -39,6 +42,8 @@ const ProductForm = ({ initialData, onSubmit, loading, isEdit, onDeleteExistingI
             });
             if (initialData.images) {
                 setExistingImages(initialData.images);
+                const existingThumb = initialData.images.find((i) => i?.isDefault) || initialData.images[0];
+                setExistingThumbnailSrc(resolveFileUrl(existingThumb?.url || existingThumb?.fileId));
             }
         }
     }, [initialData]);
@@ -53,7 +58,7 @@ const ProductForm = ({ initialData, onSubmit, loading, isEdit, onDeleteExistingI
         const totalImages = files.length + images.length + existingImages.length;
 
         if (totalImages > 5) {
-            toast.error('Maximum 5 images allowed');
+            toast.error('Maximum 5 gallery images allowed');
             return;
         }
 
@@ -77,6 +82,19 @@ const ProductForm = ({ initialData, onSubmit, loading, isEdit, onDeleteExistingI
         // Or we pass a list of "kept" image IDs to backend.
         // For now, let's assume simple full replace or just modifying state
         setExistingImages(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const handleThumbnailChange = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setThumbnail(file);
+        setThumbnailPreview(URL.createObjectURL(file));
+    };
+
+    const removeThumbnail = () => {
+        if (thumbnailPreview) URL.revokeObjectURL(thumbnailPreview);
+        setThumbnail(null);
+        setThumbnailPreview(null);
     };
 
     const deleteExistingImage = async (img, index) => {
@@ -106,6 +124,10 @@ const ProductForm = ({ initialData, onSubmit, loading, isEdit, onDeleteExistingI
                 data.append(key, formData[key]);
             }
         });
+
+        if (thumbnail) {
+            data.append('thumbnail', thumbnail);
+        }
 
         images.forEach(image => {
             data.append('images', image);
@@ -239,6 +261,43 @@ const ProductForm = ({ initialData, onSubmit, loading, isEdit, onDeleteExistingI
                 <div className="flex justify-between items-center">
                     <h2 className="font-semibold text-gray-900">Product Images</h2>
                     <span className="text-sm text-gray-500">{images.length + existingImages.length}/5 images</span>
+                </div>
+
+                <div className="border border-gray-200 rounded-xl p-4 bg-gray-50">
+                    <div className="flex items-center justify-between mb-3">
+                        <div>
+                            <p className="font-medium text-gray-900 flex items-center gap-2">
+                                <FiImage /> Thumbnail
+                            </p>
+                            <p className="text-xs text-gray-500">Used as the main product image</p>
+                        </div>
+                        {thumbnailPreview && (
+                            <button
+                                type="button"
+                                onClick={removeThumbnail}
+                                className="text-sm text-red-600 hover:underline"
+                            >
+                                Remove
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                        <div className="w-20 h-20 rounded-lg border border-gray-200 overflow-hidden bg-white flex items-center justify-center">
+                            {thumbnailPreview ? (
+                                <img src={thumbnailPreview} alt="Thumbnail preview" className="w-full h-full object-cover" />
+                            ) : existingThumbnailSrc ? (
+                                <img src={existingThumbnailSrc} alt="Existing thumbnail" className="w-full h-full object-cover" />
+                            ) : (
+                                <FiImage className="text-gray-300 w-8 h-8" />
+                            )}
+                        </div>
+                        <label className="px-4 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-white text-sm font-medium">
+                            <FiUpload className="inline mr-2" />
+                            {thumbnailPreview ? 'Replace Thumbnail' : 'Upload Thumbnail'}
+                            <input type="file" accept="image/*" onChange={handleThumbnailChange} className="hidden" />
+                        </label>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4">

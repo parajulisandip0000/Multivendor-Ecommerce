@@ -39,10 +39,16 @@ router.delete('/managers/:id', deleteManager);
 router.patch('/managers/:id/status', toggleManagerStatus);
 
 // Product Management
-router.post('/products', upload.array('images', 5), createProduct);
+router.post('/products', upload.fields([
+    { name: 'thumbnail', maxCount: 1 },
+    { name: 'images', maxCount: 5 },
+]), createProduct);
 router.get('/products', getProducts);
 router.get('/products/:id', getProduct);
-router.put('/products/:id', upload.array('images', 5), updateProduct);
+router.put('/products/:id', upload.fields([
+    { name: 'thumbnail', maxCount: 1 },
+    { name: 'images', maxCount: 5 },
+]), updateProduct);
 router.delete('/products/:id/images/:fileId', deleteProductImage);
 router.delete('/products/:id', deleteProduct);
 

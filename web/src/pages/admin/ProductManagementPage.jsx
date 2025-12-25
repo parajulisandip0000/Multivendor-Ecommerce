@@ -5,6 +5,7 @@ import ProductForm from '../../components/ProductForm';
 import { FiPlus, FiSearch, FiEdit2, FiTrash2, FiX, FiEye, FiBox } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import { getPrimaryProductImageUrl, getFileIdFromImage, resolveFileUrl } from '../../utils/media';
+import ZoomableImage from '../../components/ZoomableImage';
 
 const ProductManagementPage = () => {
     const [products, setProducts] = useState([]);
@@ -175,10 +176,12 @@ const ProductManagementPage = () => {
                                 <div className="space-y-3">
                                     <div className="w-full aspect-square rounded-xl bg-gray-100 border border-gray-200 overflow-hidden">
                                         {detailImageSrc ? (
-                                            <img
+                                            <ZoomableImage
                                                 src={detailImageSrc}
                                                 alt={selectedProduct.name}
-                                                className="w-full h-full object-cover"
+                                                zoom={2.2}
+                                                className="w-full h-full"
+                                                imgClassName="select-none"
                                             />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center text-gray-400">

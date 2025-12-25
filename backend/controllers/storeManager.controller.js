@@ -107,16 +107,28 @@ const createProduct = async (req, res, next) => {
 
         // Images are managed via file uploads only (prevent invalid body payloads from breaking validation)
         delete productData.images;
+        delete productData.thumbnail;
 
         // Handle image uploads if files are present
-        if (req.files && req.files.length > 0) {
-            const imagePromises = req.files.map((file) => uploadToGridFS(file));
+        const thumbnailFile = req.files?.thumbnail?.[0];
+        const otherImages = req.files?.images || [];
+
+        if (thumbnailFile) {
+            const uploadedThumb = await uploadToGridFS(thumbnailFile);
+            productData.thumbnail = {
+                fileId: uploadedThumb.fileId,
+                url: getFileUrl(req, uploadedThumb.fileId),
+            };
+        }
+
+        if (otherImages.length > 0) {
+            const imagePromises = otherImages.slice(0, 5).map((file) => uploadToGridFS(file));
             const uploadedImages = await Promise.all(imagePromises);
 
             productData.images = uploadedImages.map((img, index) => ({
                 fileId: img.fileId,
                 url: getFileUrl(req, img.fileId),
-                isDefault: index === 0,
+                isDefault: !productData.thumbnail && index === 0,
             }));
         }
 
@@ -151,12 +163,37 @@ const updateProduct = async (req, res, next) => {
 
         Object.keys(req.body).forEach((key) => {
             if (key === 'images' || key === 'store') return;
+            if (key === 'thumbnail') return;
             product[key] = req.body[key];
         });
 
+        const thumbnailFile = req.files?.thumbnail?.[0];
+        const otherImages = req.files?.images || [];
+
+        if (thumbnailFile) {
+            const uploadedThumb = await uploadToGridFS(thumbnailFile);
+            const previousThumbFileId = product.thumbnail?.fileId;
+            product.thumbnail = {
+                fileId: uploadedThumb.fileId,
+                url: getFileUrl(req, uploadedThumb.fileId),
+            };
+            if (previousThumbFileId) {
+                await deleteFromGridFS(previousThumbFileId);
+            }
+        }
+
         // Handle new image uploads
-        if (req.files && req.files.length > 0) {
-            const imagePromises = req.files.map((file) => uploadToGridFS(file));
+        if (otherImages.length > 0) {
+            const remainingSlots = 5 - (product.images?.length || 0);
+            if (remainingSlots <= 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Maximum 5 gallery images allowed',
+                });
+            }
+
+            const toUpload = otherImages.slice(0, remainingSlots);
+            const imagePromises = toUpload.map((file) => uploadToGridFS(file));
             const uploadedImages = await Promise.all(imagePromises);
 
             const newImages = uploadedImages.map((img) => ({
@@ -166,6 +203,12 @@ const updateProduct = async (req, res, next) => {
             }));
 
             product.images.push(...newImages);
+        }
+
+        if (!product.thumbnail?.fileId && (product.images || []).length > 0) {
+            product.images.forEach((img, idx) => {
+                img.isDefault = idx === 0;
+            });
         }
 
         await product.save();

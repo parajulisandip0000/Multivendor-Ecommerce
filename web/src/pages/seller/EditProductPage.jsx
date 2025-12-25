@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fetchSellerProductDetails, updateSellerProduct, clearCurrentProduct } from '../../redux/slices/sellerSlice';
 import SellerDashboardLayout from '../../components/SellerDashboardLayout';
-import { FiUpload, FiX, FiSave, FiArrowLeft, FiTrash2 } from 'react-icons/fi';
+import { FiUpload, FiX, FiSave, FiArrowLeft, FiTrash2, FiImage } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import { resolveFileUrl } from '../../utils/media';
 import { storeAdminService } from '../../services';
@@ -35,6 +35,9 @@ const EditProductPage = () => {
     const [newImages, setNewImages] = useState([]);
     const [newPreviewUrls, setNewPreviewUrls] = useState([]);
     const [existingImages, setExistingImages] = useState([]);
+    const [thumbnail, setThumbnail] = useState(null);
+    const [thumbnailPreview, setThumbnailPreview] = useState(null);
+    const [existingThumbnailSrc, setExistingThumbnailSrc] = useState(null);
 
     useEffect(() => {
         if (id) {
@@ -58,6 +61,7 @@ const EditProductPage = () => {
                 status: currentProduct.status || 'active'
             });
             setExistingImages(currentProduct.images || []);
+            setExistingThumbnailSrc(resolveFileUrl(currentProduct.thumbnail?.url || currentProduct.thumbnail?.fileId));
         }
     }, [currentProduct]);
 
@@ -71,7 +75,7 @@ const EditProductPage = () => {
         const totalImages = existingImages.length + newImages.length + files.length;
 
         if (totalImages > 5) {
-            toast.error('Maximum 5 images allowed total');
+            toast.error('Maximum 5 gallery images allowed total');
             return;
         }
 
@@ -88,6 +92,19 @@ const EditProductPage = () => {
             URL.revokeObjectURL(newPreviews[index]);
             return newPreviews.filter((_, i) => i !== index);
         });
+    };
+
+    const handleThumbnailChange = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setThumbnail(file);
+        setThumbnailPreview(URL.createObjectURL(file));
+    };
+
+    const removeThumbnail = () => {
+        if (thumbnailPreview) URL.revokeObjectURL(thumbnailPreview);
+        setThumbnail(null);
+        setThumbnailPreview(null);
     };
 
     const removeExistingImage = async (img) => {
@@ -119,6 +136,10 @@ const EditProductPage = () => {
         });
 
         // Backend only supports appending NEW images in update
+        if (thumbnail) {
+            data.append('thumbnail', thumbnail);
+        }
+
         newImages.forEach(image => {
             data.append('images', image);
         });
@@ -287,6 +308,44 @@ const EditProductPage = () => {
                             <span className="text-sm text-gray-500">
                                 {existingImages.length + newImages.length}/5 images
                             </span>
+                        </div>
+
+                        {/* Thumbnail */}
+                        <div className="border border-gray-200 rounded-xl p-4 bg-gray-50">
+                            <div className="flex items-center justify-between mb-3">
+                                <div>
+                                    <p className="font-medium text-gray-900 flex items-center gap-2">
+                                        <FiImage /> Thumbnail
+                                    </p>
+                                    <p className="text-xs text-gray-500">Used as the main product image</p>
+                                </div>
+                                {thumbnailPreview && (
+                                    <button
+                                        type="button"
+                                        onClick={removeThumbnail}
+                                        className="text-sm text-red-600 hover:underline"
+                                    >
+                                        Remove
+                                    </button>
+                                )}
+                            </div>
+
+                            <div className="flex items-center gap-4">
+                                <div className="w-20 h-20 rounded-lg border border-gray-200 overflow-hidden bg-white flex items-center justify-center">
+                                    {thumbnailPreview ? (
+                                        <img src={thumbnailPreview} alt="Thumbnail preview" className="w-full h-full object-cover" />
+                                    ) : existingThumbnailSrc ? (
+                                        <img src={existingThumbnailSrc} alt="Existing thumbnail" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <FiImage className="text-gray-300 w-8 h-8" />
+                                    )}
+                                </div>
+                                <label className="px-4 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-white text-sm font-medium">
+                                    <FiUpload className="inline mr-2" />
+                                    {thumbnailPreview ? 'Replace Thumbnail' : 'Upload Thumbnail'}
+                                    <input type="file" accept="image/*" onChange={handleThumbnailChange} className="hidden" />
+                                </label>
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">

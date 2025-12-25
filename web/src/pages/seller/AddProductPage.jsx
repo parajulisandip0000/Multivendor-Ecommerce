@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { createSellerProduct } from '../../redux/slices/sellerSlice';
 import SellerDashboardLayout from '../../components/SellerDashboardLayout';
-import { FiUpload, FiX, FiSave } from 'react-icons/fi';
+import { FiUpload, FiX, FiSave, FiImage } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 
 const CATEGORIES = [
@@ -29,6 +29,8 @@ const AddProductPage = () => {
 
     const [images, setImages] = useState([]);
     const [previewUrls, setPreviewUrls] = useState([]);
+    const [thumbnail, setThumbnail] = useState(null);
+    const [thumbnailPreview, setThumbnailPreview] = useState(null);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -37,8 +39,9 @@ const AddProductPage = () => {
 
     const handleImageChange = (e) => {
         const files = Array.from(e.target.files);
-        if (files.length + images.length > 5) {
-            toast.error('Maximum 5 images allowed');
+        const total = files.length + images.length;
+        if (total > 5) {
+            toast.error('Maximum 5 gallery images allowed');
             return;
         }
 
@@ -46,6 +49,20 @@ const AddProductPage = () => {
 
         const newPreviews = files.map(file => URL.createObjectURL(file));
         setPreviewUrls(prev => [...prev, ...newPreviews]);
+    };
+
+    const handleThumbnailChange = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setThumbnail(file);
+        setThumbnailPreview(URL.createObjectURL(file));
+    };
+
+    const removeThumbnail = () => {
+        if (thumbnailPreview) URL.revokeObjectURL(thumbnailPreview);
+        setThumbnail(null);
+        setThumbnailPreview(null);
     };
 
     const removeImage = (index) => {
@@ -69,6 +86,10 @@ const AddProductPage = () => {
         Object.keys(formData).forEach(key => {
             if (formData[key]) data.append(key, formData[key]);
         });
+
+        if (thumbnail) {
+            data.append('thumbnail', thumbnail);
+        }
 
         images.forEach(image => {
             data.append('images', image);
@@ -194,6 +215,42 @@ const AddProductPage = () => {
                         <div className="flex justify-between items-center">
                             <h2 className="font-semibold text-gray-900">Product Images</h2>
                             <span className="text-sm text-gray-500">{images.length}/5 images</span>
+                        </div>
+
+                        {/* Thumbnail */}
+                        <div className="border border-gray-200 rounded-xl p-4 bg-gray-50">
+                            <div className="flex items-center justify-between mb-3">
+                                <div>
+                                    <p className="font-medium text-gray-900 flex items-center gap-2">
+                                        <FiImage /> Thumbnail
+                                    </p>
+                                    <p className="text-xs text-gray-500">Used as the main product image</p>
+                                </div>
+                                {thumbnailPreview && (
+                                    <button
+                                        type="button"
+                                        onClick={removeThumbnail}
+                                        className="text-sm text-red-600 hover:underline"
+                                    >
+                                        Remove
+                                    </button>
+                                )}
+                            </div>
+
+                            <div className="flex items-center gap-4">
+                                <div className="w-20 h-20 rounded-lg border border-gray-200 overflow-hidden bg-white flex items-center justify-center">
+                                    {thumbnailPreview ? (
+                                        <img src={thumbnailPreview} alt="Thumbnail preview" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <FiImage className="text-gray-300 w-8 h-8" />
+                                    )}
+                                </div>
+                                <label className="px-4 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-white text-sm font-medium">
+                                    <FiUpload className="inline mr-2" />
+                                    Upload Thumbnail
+                                    <input type="file" accept="image/*" onChange={handleThumbnailChange} className="hidden" />
+                                </label>
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
