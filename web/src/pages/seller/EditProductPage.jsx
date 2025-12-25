@@ -3,8 +3,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fetchSellerProductDetails, updateSellerProduct, clearCurrentProduct } from '../../redux/slices/sellerSlice';
 import SellerDashboardLayout from '../../components/SellerDashboardLayout';
-import { FiUpload, FiX, FiSave, FiArrowLeft } from 'react-icons/fi';
+import { FiUpload, FiX, FiSave, FiArrowLeft, FiTrash2 } from 'react-icons/fi';
 import { toast } from 'react-toastify';
+import { resolveFileUrl } from '../../utils/media';
+import { storeAdminService } from '../../services';
+import { getFileIdFromImage } from '../../utils/media';
 
 const CATEGORIES = [
     'Electronics', 'Fashion', 'Home & Garden', 'Sports & Outdoors',
@@ -85,6 +88,24 @@ const EditProductPage = () => {
             URL.revokeObjectURL(newPreviews[index]);
             return newPreviews.filter((_, i) => i !== index);
         });
+    };
+
+    const removeExistingImage = async (img) => {
+        const fileId = getFileIdFromImage(img);
+        if (!fileId) {
+            toast.error('Unable to determine image id');
+            return;
+        }
+        if (!window.confirm('Delete this image?')) return;
+
+        try {
+            await storeAdminService.deleteProductImage(id, fileId);
+            setExistingImages((prev) => prev.filter((i) => getFileIdFromImage(i) !== fileId));
+            toast.success('Image deleted');
+        } catch (error) {
+            console.error(error);
+            toast.error(error.response?.data?.message || 'Failed to delete image');
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -271,9 +292,26 @@ const EditProductPage = () => {
                         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                             {/* Existing Images */}
                             {existingImages.map((img, index) => (
-                                <div key={img._id || index} className="relative aspect-square rounded-lg border border-gray-200 overflow-hidden group">
-                                    <img src={img.url} alt={`Existing ${index}`} className="w-full h-full object-cover" />
-                                    {/* No delete yet */}
+                                <div key={img.fileId || img.url || index} className="relative aspect-square rounded-lg border border-gray-200 overflow-hidden group">
+                                    {resolveFileUrl(img?.url || img?.fileId) ? (
+                                        <img
+                                            src={resolveFileUrl(img?.url || img?.fileId)}
+                                            alt={`Existing ${index}`}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                            <FiUpload />
+                                        </div>
+                                    )}
+                                    <button
+                                        type="button"
+                                        onClick={() => removeExistingImage(img)}
+                                        className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                        title="Delete image"
+                                    >
+                                        <FiTrash2 className="w-4 h-4" />
+                                    </button>
                                 </div>
                             ))}
 
@@ -305,7 +343,7 @@ const EditProductPage = () => {
                                 </label>
                             )}
                         </div>
-                        <p className="text-xs text-gray-500">Note: You can add new images. Deleting existing images is not supported yet.</p>
+                        <p className="text-xs text-gray-500">Tip: Click the trash icon to delete an existing image.</p>
                     </div>
 
                     <div className="flex justify-end gap-3">

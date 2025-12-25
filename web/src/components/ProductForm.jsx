@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FiUpload, FiX, FiSave, FiEdit } from 'react-icons/fi';
 import { toast } from 'react-toastify';
+import { resolveFileUrl } from '../utils/media';
 
 const CATEGORIES = [
     'Electronics', 'Fashion', 'Home & Garden', 'Sports & Outdoors',
@@ -8,7 +9,7 @@ const CATEGORIES = [
     'Automotive', 'Other'
 ];
 
-const ProductForm = ({ initialData, onSubmit, loading, isEdit }) => {
+const ProductForm = ({ initialData, onSubmit, loading, isEdit, onDeleteExistingImage }) => {
     const [formData, setFormData] = useState({
         name: '',
         description: '',
@@ -31,7 +32,7 @@ const ProductForm = ({ initialData, onSubmit, loading, isEdit }) => {
                 description: initialData.description || '',
                 category: initialData.category || '',
                 price: initialData.price || '',
-                quantity: initialData.stock || '', // Map stock to quantity
+                quantity: initialData.quantity ?? '',
                 sku: initialData.sku || '',
                 brand: initialData.brand || '',
                 discount: initialData.discount || '0',
@@ -78,6 +79,19 @@ const ProductForm = ({ initialData, onSubmit, loading, isEdit }) => {
         setExistingImages(prev => prev.filter((_, i) => i !== index));
     };
 
+    const deleteExistingImage = async (img, index) => {
+        if (!onDeleteExistingImage) return;
+        if (!window.confirm('Delete this image?')) return;
+        try {
+            await onDeleteExistingImage(img);
+            removeExistingImage(index);
+            toast.success('Image deleted');
+        } catch (error) {
+            console.error(error);
+            toast.error(error.response?.data?.message || 'Failed to delete image');
+        }
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
 
@@ -89,21 +103,7 @@ const ProductForm = ({ initialData, onSubmit, loading, isEdit }) => {
         const data = new FormData();
         Object.keys(formData).forEach(key => {
             if (formData[key] !== undefined && formData[key] !== null) {
-                // Determine key mapping if needed. Backend expects 'stock' but form uses 'quantity' 
-                // Wait, Backend model has 'stock'. AddProductPage uses 'quantity' but backend createProduct might expect 'stock' or 'quantity'?
-                // Checking AddProductPage: it appends 'quantity'.
-                // Checking backend Product model: it has 'stock'.
-                // Checking backend createProduct: `const productData = { ...req.body }`.
-                // So if frontend sends 'quantity', backend saves 'quantity'? 
-                // Product model likely has 'stock'.
-                // Let's check Product model later. For now, let's stick to what AddProductPage was doing or standardize.
-                // Assuming AddProductPage was working, I will verify.
-                // Actually, standardizing to 'stock' is better.
-                if (key === 'quantity') {
-                    data.append('stock', formData[key]);
-                } else {
-                    data.append(key, formData[key]);
-                }
+                data.append(key, formData[key]);
             }
         });
 
@@ -244,9 +244,28 @@ const ProductForm = ({ initialData, onSubmit, loading, isEdit }) => {
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                     {/* Existing Images */}
                     {existingImages.map((img, index) => (
-                        <div key={img._id || index} className="relative aspect-square rounded-lg border border-gray-200 overflow-hidden group">
-                            <img src={img.url} alt={`Product ${index}`} className="w-full h-full object-cover" />
-                            {/* Delete logic for existing images can be added later if API supports it */}
+                        <div key={img.fileId || img.url || index} className="relative aspect-square rounded-lg border border-gray-200 overflow-hidden group">
+                            {resolveFileUrl(img?.url || img?.fileId) ? (
+                                <img
+                                    src={resolveFileUrl(img?.url || img?.fileId)}
+                                    alt={`Product ${index}`}
+                                    className="w-full h-full object-cover"
+                                />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                    <FiUpload />
+                                </div>
+                            )}
+                            {onDeleteExistingImage && (
+                                <button
+                                    type="button"
+                                    onClick={() => deleteExistingImage(img, index)}
+                                    className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                    title="Delete image"
+                                >
+                                    <FiX className="w-4 h-4" />
+                                </button>
+                            )}
                         </div>
                     ))}
 

@@ -32,6 +32,7 @@ import SellerDashboard from './pages/seller/SellerDashboard';
 import ProductsPage from './pages/seller/ProductsPage';
 import AddProductPage from './pages/seller/AddProductPage';
 import EditProductPage from './pages/seller/EditProductPage';
+import SellerProductDetailPage from './pages/seller/SellerProductDetailPage';
 import OrdersPage from './pages/seller/OrdersPage';
 import SellerOrderDetailPage from './pages/seller/OrderDetailPage';
 import StoreProfilePage from './pages/seller/StoreProfilePage';
@@ -402,6 +403,14 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={['store_admin']}>
             <EditProductPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/seller/products/:id"
+        element={
+          <ProtectedRoute allowedRoles={['store_admin']}>
+            <SellerProductDetailPage />
           </ProtectedRoute>
         }
       />

@@ -14,6 +14,7 @@ const {
     getProduct,
     updateProduct,
     deleteProduct,
+    deleteProductImage,
     getOrders,
     getOrder,
     updateOrderStatus,
@@ -42,6 +43,7 @@ router.post('/products', upload.array('images', 5), createProduct);
 router.get('/products', getProducts);
 router.get('/products/:id', getProduct);
 router.put('/products/:id', upload.array('images', 5), updateProduct);
+router.delete('/products/:id/images/:fileId', deleteProductImage);
 router.delete('/products/:id', deleteProduct);
 
 // Order Management

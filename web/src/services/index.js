@@ -260,6 +260,11 @@ export const storeAdminService = {
         return response.data;
     },
 
+    deleteProductImage: async (productId, fileId) => {
+        const response = await api.delete(`/store-admin/products/${productId}/images/${fileId}`);
+        return response.data;
+    },
+
     // Order Management
     getOrders: async (params) => {
         const response = await api.get('/store-admin/orders', { params });
@@ -304,6 +309,11 @@ export const storeManagerService = {
 
     deleteProduct: async (productId) => {
         const response = await api.delete(`/store-manager/products/${productId}`);
+        return response.data;
+    },
+
+    deleteProductImage: async (productId, fileId) => {
+        const response = await api.delete(`/store-manager/products/${productId}/images/${fileId}`);
         return response.data;
     },
 

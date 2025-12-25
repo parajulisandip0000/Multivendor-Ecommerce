@@ -2,14 +2,16 @@ import { useState, useEffect } from 'react';
 import { storeManagerService } from '../../services';
 import StoreManagerLayout from '../../components/StoreManagerLayout';
 import ProductForm from '../../components/ProductForm';
-import { FiPlus, FiSearch, FiEdit2, FiTrash2, FiX } from 'react-icons/fi';
+import { FiPlus, FiSearch, FiEdit2, FiTrash2, FiX, FiEye, FiBox } from 'react-icons/fi';
 import { toast } from 'react-toastify';
+import { getPrimaryProductImageUrl, getFileIdFromImage, resolveFileUrl } from '../../utils/media';
 
 const ProductManagementPage = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [viewMode, setViewMode] = useState('list'); // 'list', 'create', 'edit'
+    const [viewMode, setViewMode] = useState('list'); // 'list', 'create', 'edit', 'detail'
     const [selectedProduct, setSelectedProduct] = useState(null);
+    const [detailImageSrc, setDetailImageSrc] = useState(null);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
 
@@ -72,6 +74,27 @@ const ProductManagementPage = () => {
         setViewMode('edit');
     };
 
+    const startDetail = (product) => {
+        setSelectedProduct(product);
+        setDetailImageSrc(getPrimaryProductImageUrl(product));
+        setViewMode('detail');
+    };
+
+    const deleteExistingImage = async (img) => {
+        const fileId = getFileIdFromImage(img);
+        if (!fileId || !selectedProduct?._id) throw new Error('Missing image id');
+
+        const response = await storeManagerService.deleteProductImage(selectedProduct._id, fileId);
+        setSelectedProduct(response.data.product);
+        setProducts((prev) => prev.map((p) => (p._id === response.data.product._id ? response.data.product : p)));
+
+        const nextPrimary = getPrimaryProductImageUrl(response.data.product);
+        setDetailImageSrc((current) => {
+            if (!current) return nextPrimary;
+            return current.includes(fileId) ? nextPrimary : current;
+        });
+    };
+
     if (viewMode === 'create') {
         return (
             <StoreManagerLayout>
@@ -112,7 +135,124 @@ const ProductManagementPage = () => {
                         onSubmit={handleUpdate}
                         loading={false}
                         isEdit={true}
+                        onDeleteExistingImage={deleteExistingImage}
                     />
+                </div>
+            </StoreManagerLayout>
+        );
+    }
+
+    if (viewMode === 'detail') {
+        return (
+            <StoreManagerLayout>
+                <div className="max-w-4xl mx-auto">
+                    <div className="flex items-center justify-between mb-6">
+                        <div>
+                            <h1 className="text-2xl font-bold text-gray-900">Product Details</h1>
+                            <p className="text-gray-500">View product information</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setViewMode('list')}
+                                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                            >
+                                Back
+                            </button>
+                            {selectedProduct && (
+                                <button
+                                    onClick={() => startEdit(selectedProduct)}
+                                    className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+                                >
+                                    Edit
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {selectedProduct ? (
+                        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-3">
+                                    <div className="w-full aspect-square rounded-xl bg-gray-100 border border-gray-200 overflow-hidden">
+                                        {detailImageSrc ? (
+                                            <img
+                                                src={detailImageSrc}
+                                                alt={selectedProduct.name}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                                <FiBox className="w-10 h-10" />
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {(selectedProduct.images || []).length > 1 && (
+                                        <div className="grid grid-cols-5 gap-2">
+                                            {selectedProduct.images.slice(0, 5).map((img) => (
+                                                <button
+                                                    key={img.fileId || img.url}
+                                                    type="button"
+                                                    onClick={() => setDetailImageSrc(resolveFileUrl(img.url || img.fileId))}
+                                                    className={`aspect-square rounded-lg bg-gray-100 border overflow-hidden ${detailImageSrc === resolveFileUrl(img.url || img.fileId)
+                                                        ? 'border-primary-600 ring-2 ring-primary-200'
+                                                        : 'border-gray-200 hover:border-gray-300'
+                                                        }`}
+                                                    title="Preview"
+                                                >
+                                                    {resolveFileUrl(img.url || img.fileId) ? (
+                                                        <img
+                                                            src={resolveFileUrl(img.url || img.fileId)}
+                                                            alt=""
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    ) : null}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div>
+                                        <h2 className="text-xl font-bold text-gray-900">{selectedProduct.name}</h2>
+                                        <p className="text-sm text-gray-500">{selectedProduct.category}</p>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                                            <p className="text-xs text-gray-500">Price</p>
+                                            <p className="text-lg font-bold text-gray-900">NRS {Number(selectedProduct.price || 0).toLocaleString()}</p>
+                                        </div>
+                                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                                            <p className="text-xs text-gray-500">Stock</p>
+                                            <p className="text-lg font-bold text-gray-900">{selectedProduct.quantity}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                                        <p className="text-xs text-gray-500 mb-1">Description</p>
+                                        <p className="text-sm text-gray-800 whitespace-pre-wrap">{selectedProduct.description}</p>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                                            <p className="text-xs text-gray-500">SKU</p>
+                                            <p className="text-sm font-medium text-gray-900">{selectedProduct.sku || 'N/A'}</p>
+                                        </div>
+                                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                                            <p className="text-xs text-gray-500">Status</p>
+                                            <p className="text-sm font-medium text-gray-900">{selectedProduct.status}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                            <p className="text-gray-700">No product selected.</p>
+                        </div>
+                    )}
                 </div>
             </StoreManagerLayout>
         );
@@ -152,29 +292,40 @@ const ProductManagementPage = () => {
                                     products.map((product) => (
                                         <tr key={product._id} className="hover:bg-gray-50">
                                             <td className="px-6 py-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden shrink-0">
-                                                        {product.images?.[0]?.url && (
-                                                            <img src={product.images[0].url} alt={product.name} className="w-full h-full object-cover" />
-                                                        )}
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden shrink-0">
+                                                            {getPrimaryProductImageUrl(product) ? (
+                                                                <img src={getPrimaryProductImageUrl(product)} alt={product.name} className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                                                    <FiBox className="w-4 h-4" />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-medium text-gray-900 line-clamp-1">{product.name}</p>
+                                                            <p className="text-xs text-gray-500">{product.sku || 'No SKU'}</p>
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <p className="font-medium text-gray-900 line-clamp-1">{product.name}</p>
-                                                        <p className="text-xs text-gray-500">{product.sku || 'No SKU'}</p>
-                                                    </div>
-                                                </div>
-                                            </td>
+                                                </td>
                                             <td className="px-6 py-4 text-sm text-gray-600">{product.category}</td>
                                             <td className="px-6 py-4 text-sm font-medium text-gray-900">NRS {product.price}</td>
                                             <td className="px-6 py-4">
                                                 <span className={`px-2 py-1 text-xs font-semibold rounded-full
-                                                    ${product.stock > 10 ? 'bg-green-100 text-green-700' :
-                                                        product.stock > 0 ? 'bg-yellow-100 text-yellow-700' :
+                                                    ${product.quantity > 10 ? 'bg-green-100 text-green-700' :
+                                                        product.quantity > 0 ? 'bg-yellow-100 text-yellow-700' :
                                                             'bg-red-100 text-red-700'}`}>
-                                                    {product.stock} in stock
+                                                    {product.quantity} in stock
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 text-right space-x-2">
+                                                <button
+                                                    onClick={() => startDetail(product)}
+                                                    className="p-1 text-gray-700 hover:bg-gray-100 rounded"
+                                                    title="View"
+                                                >
+                                                    <FiEye className="w-5 h-5" />
+                                                </button>
                                                 <button
                                                     onClick={() => startEdit(product)}
                                                     className="p-1 text-blue-600 hover:bg-blue-50 rounded"

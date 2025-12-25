@@ -557,6 +557,61 @@ const updateOrderStatus = async (req, res, next) => {
     }
 };
 
+// @desc    Delete a single product image
+// @route   DELETE /api/store-admin/products/:id/images/:fileId
+// @access  Private/StoreAdmin
+const deleteProductImage = async (req, res, next) => {
+    try {
+        const store = await resolveStoreForAdmin(req.user);
+        if (!store) {
+            return res.status(404).json({
+                success: false,
+                message: 'Store not found',
+            });
+        }
+
+        const { id, fileId } = req.params;
+
+        const product = await Product.findOne({ _id: id, store: store._id });
+        if (!product) {
+            return res.status(404).json({
+                success: false,
+                message: 'Product not found',
+            });
+        }
+
+        const imageIndex = (product.images || []).findIndex(
+            (img) => img.fileId?.toString() === fileId.toString()
+        );
+
+        if (imageIndex === -1) {
+            return res.status(404).json({
+                success: false,
+                message: 'Image not found on product',
+            });
+        }
+
+        // Remove reference from product first (avoids broken references on failed GridFS delete)
+        product.images.splice(imageIndex, 1);
+        await product.save();
+
+        const deleted = await deleteFromGridFS(fileId);
+
+        res.json({
+            success: true,
+            message: deleted
+                ? 'Image deleted successfully'
+                : 'Image removed from product, but file cleanup failed',
+            data: {
+                product,
+                cleanupFailed: !deleted,
+            },
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 const getAnalytics = async (req, res, next) => {
     try {
         const store = await resolveStoreForAdmin(req.user);
@@ -763,6 +818,7 @@ module.exports = {
     getProduct,
     updateProduct,
     deleteProduct,
+    deleteProductImage,
     getOrders,
     getOrder,
     updateOrderStatus,

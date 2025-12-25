@@ -216,6 +216,56 @@ const deleteProduct = async (req, res, next) => {
     }
 };
 
+// @desc    Delete a single product image
+// @route   DELETE /api/store-manager/products/:productId/images/:fileId
+// @access  Private/StoreManager
+const deleteProductImage = async (req, res, next) => {
+    try {
+        const { productId, fileId } = req.params;
+
+        const product = await Product.findOne({
+            _id: productId,
+            store: req.user.storeId,
+        });
+
+        if (!product) {
+            return res.status(404).json({
+                success: false,
+                message: 'Product not found',
+            });
+        }
+
+        const imageIndex = (product.images || []).findIndex(
+            (img) => img.fileId?.toString() === fileId.toString()
+        );
+
+        if (imageIndex === -1) {
+            return res.status(404).json({
+                success: false,
+                message: 'Image not found on product',
+            });
+        }
+
+        product.images.splice(imageIndex, 1);
+        await product.save();
+
+        const deleted = await deleteFromGridFS(fileId);
+
+        res.json({
+            success: true,
+            message: deleted
+                ? 'Image deleted successfully'
+                : 'Image removed from product, but file cleanup failed',
+            data: {
+                product,
+                cleanupFailed: !deleted,
+            },
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 // @desc    Get all orders for manager's store
 // @route   GET /api/store-manager/orders
 // @access  Private/StoreManager
@@ -485,6 +535,7 @@ module.exports = {
     createProduct,
     updateProduct,
     deleteProduct,
+    deleteProductImage,
     getOrders,
     updateOrderStatus,
     getAnalytics,

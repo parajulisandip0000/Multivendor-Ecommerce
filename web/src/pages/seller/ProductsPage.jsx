@@ -3,8 +3,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { fetchSellerProducts, deleteSellerProduct } from '../../redux/slices/sellerSlice';
 import SellerDashboardLayout from '../../components/SellerDashboardLayout';
-import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiFilter, FiMoreVertical } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiFilter, FiBox, FiEye } from 'react-icons/fi';
 import { toast } from 'react-toastify';
+import { getPrimaryProductImageUrl } from '../../utils/media';
 
 const ProductsPage = () => {
     const dispatch = useDispatch();
@@ -100,9 +101,9 @@ const ProductsPage = () => {
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-12 h-12 rounded-lg bg-gray-100 border border-gray-200 overflow-hidden flex-shrink-0">
-                                                    {product.images?.[0]?.url ? (
+                                                    {getPrimaryProductImageUrl(product) ? (
                                                         <img
-                                                            src={product.images[0].url}
+                                                            src={getPrimaryProductImageUrl(product)}
                                                             alt={product.name}
                                                             className="w-full h-full object-cover"
                                                         />
@@ -138,6 +139,13 @@ const ProductsPage = () => {
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-2">
+                                                <Link
+                                                    to={`/seller/products/${product._id}`}
+                                                    className="p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                                                    title="View"
+                                                >
+                                                    <FiEye className="w-4 h-4" />
+                                                </Link>
                                                 <Link
                                                     to={`/seller/products/edit/${product._id}`}
                                                     className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"

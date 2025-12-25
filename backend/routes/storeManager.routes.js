@@ -6,6 +6,7 @@ const {
     createProduct,
     updateProduct,
     deleteProduct,
+    deleteProductImage,
     getOrders,
     updateOrderStatus,
     getAnalytics,
@@ -22,6 +23,7 @@ router.get('/dashboard', getDashboard);
 router.get('/products', getProducts);
 router.post('/products', upload.array('images', 5), createProduct);
 router.put('/products/:productId', upload.array('images', 5), updateProduct);
+router.delete('/products/:productId/images/:fileId', deleteProductImage);
 router.delete('/products/:productId', deleteProduct);
 
 router.get('/orders', getOrders);
