@@ -1,15 +1,6 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+import { getApiUrl, getBackendOrigin } from '../config/urls';
 
-const getBackendOrigin = () => {
-    try {
-        const u = new URL(API_URL);
-        // If API_URL is ".../api", return origin without "/api"
-        const basePath = u.pathname.replace(/\/+$/, '').replace(/\/api$/, '');
-        return `${u.origin}${basePath}`;
-    } catch {
-        return (API_URL || '').replace(/\/+$/, '').replace(/\/api$/, '');
-    }
-};
+const API_URL = getApiUrl();
 
 export const resolveBackendUrl = (value) => {
     if (!value) return null;

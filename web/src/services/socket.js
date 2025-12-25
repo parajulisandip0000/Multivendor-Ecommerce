@@ -1,12 +1,8 @@
 import { io } from 'socket.io-client';
+import { getSocketUrl } from '../config/urls';
 
 let socket;
 let lastToken;
-
-const getSocketUrl = () => {
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-    return apiUrl.endsWith('/api') ? apiUrl.slice(0, -4) : apiUrl;
-};
 
 export const getSocket = (token) => {
     if (!token) return null;
@@ -32,4 +28,3 @@ export const disconnectSocket = () => {
     socket = null;
     lastToken = null;
 };
-

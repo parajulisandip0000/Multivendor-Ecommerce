@@ -1,8 +1,9 @@
 import axios from 'axios';
 import store from '../redux/store';
 import { updateToken, logout } from '../redux/slices/authSlice';
+import { getApiUrl } from '../config/urls';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = getApiUrl();
 
 const api = axios.create({
     baseURL: API_URL,
@@ -33,7 +34,7 @@ api.interceptors.response.use(
 
             try {
                 const refreshToken = store.getState().auth.refreshToken;
-                const response = await axios.post(`${API_URL}/auth/refresh`, {
+                const response = await api.post('/auth/refresh', {
                     refreshToken,
                 });
 
