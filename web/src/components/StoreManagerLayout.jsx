@@ -1,22 +1,30 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { FiHome, FiShoppingBag, FiBox, FiLogOut, FiMenu, FiX, FiMessageCircle } from 'react-icons/fi';
+import { FiHome, FiShoppingBag, FiBox, FiLogOut, FiMenu, FiX, FiMessageCircle, FiBarChart2, FiSettings, FiUser } from 'react-icons/fi';
 import { logout } from '../redux/slices/authSlice';
 import { toast } from 'react-toastify';
 
 const StoreManagerLayout = ({ children }) => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [avatarError, setAvatarError] = useState(false);
     const location = useLocation();
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const { user } = useSelector((state) => state.auth);
+    const storeLogo = user?.storeId?.logo || null;
+    const storeName = user?.storeId?.name || null;
+    const userInitial = (user?.name || user?.email || 'U').trim().charAt(0).toUpperCase();
+    const avatarSrc = !avatarError ? (user?.avatar || null) : null;
 
     const menuItems = [
         { path: '/store-manager/dashboard', icon: FiHome, label: 'Overview' },
         { path: '/store-manager/chat', icon: FiMessageCircle, label: 'Chat' },
         { path: '/store-manager/products', icon: FiBox, label: 'Products' },
         { path: '/store-manager/orders', icon: FiShoppingBag, label: 'Orders' },
+        { path: '/store-manager/analytics', icon: FiBarChart2, label: 'Analytics' },
+        { path: '/store-manager/settings', icon: FiSettings, label: 'Store Settings' },
+        { path: '/store-manager/profile', icon: FiUser, label: 'Edit Profile' },
     ];
 
     const handleLogout = () => {
@@ -40,9 +48,25 @@ const StoreManagerLayout = ({ children }) => {
                     </button>
                     <span className="font-bold text-lg text-gray-900">Manager Panel</span>
                 </div>
-                <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden">
-                    <img src={user?.avatar || '/avatar-placeholder.svg'} alt="Profile" className="w-full h-full object-cover" />
-                </div>
+                <button
+                    type="button"
+                    onClick={() => navigate('/store-manager/profile')}
+                    className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden"
+                    aria-label="Edit profile"
+                >
+                    {avatarSrc ? (
+                        <img
+                            src={avatarSrc}
+                            alt="Profile"
+                            className="w-full h-full object-cover"
+                            onError={() => setAvatarError(true)}
+                        />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-700 font-semibold bg-gray-200">
+                            {userInitial}
+                        </div>
+                    )}
+                </button>
             </div>
 
             <div className="flex">
@@ -55,10 +79,19 @@ const StoreManagerLayout = ({ children }) => {
                     <div className="flex flex-col h-full">
                         {/* Store Brand */}
                         <div className="p-6 border-b border-gray-200">
-                            <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                                Manager Portal
-                            </h1>
-                            <p className="text-xs text-gray-500 mt-1">Store Management</p>
+                            <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-lg bg-gray-100 overflow-hidden border border-gray-200 shrink-0">
+                                    {storeLogo ? (
+                                        <img src={storeLogo} alt={storeName || 'Store'} className="w-full h-full object-cover" />
+                                    ) : null}
+                                </div>
+                                <div className="min-w-0">
+                                    <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent truncate">
+                                        {storeName || 'Manager Portal'}
+                                    </h1>
+                                    <p className="text-xs text-gray-500 mt-0.5">Store Management</p>
+                                </div>
+                            </div>
                         </div>
 
                         {/* Navigation Menu */}
@@ -91,15 +124,31 @@ const StoreManagerLayout = ({ children }) => {
 
                         {/* User Info & Logout */}
                         <div className="p-4 border-t border-gray-200 bg-gray-50">
-                            <div className="flex items-center gap-3 mb-4 px-2">
+                            <button
+                                type="button"
+                                onClick={() => navigate('/store-manager/profile')}
+                                className="flex items-center gap-3 mb-4 px-2 w-full text-left hover:bg-gray-100 rounded-lg py-2 transition-colors"
+                                aria-label="Edit profile"
+                            >
                                 <div className="w-10 h-10 rounded-full bg-white border border-gray-200 overflow-hidden">
-                                    <img src={user?.avatar || '/avatar-placeholder.svg'} alt={user?.name} className="w-full h-full object-cover" />
+                                    {avatarSrc ? (
+                                        <img
+                                            src={avatarSrc}
+                                            alt={user?.name || 'Profile'}
+                                            className="w-full h-full object-cover"
+                                            onError={() => setAvatarError(true)}
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-gray-700 font-semibold bg-gray-100">
+                                            {userInitial}
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-semibold text-gray-900 truncate">{user?.name}</p>
-                                    <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                                    <p className="text-sm font-semibold text-gray-900 truncate">{user?.name || 'Account'}</p>
+                                    <p className="text-xs text-gray-500 truncate">{user?.email || ''}</p>
                                 </div>
-                            </div>
+                            </button>
                             <button
                                 onClick={handleLogout}
                                 className="flex items-center gap-3 px-4 py-2 rounded-lg text-red-600 hover:bg-red-50 w-full transition-colors text-sm font-medium"

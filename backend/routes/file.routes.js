@@ -61,6 +61,7 @@ router.get('/:fileId', async (req, res, next) => {
         // Set headers
         res.set('Content-Type', fileInfo.contentType);
         res.set('Content-Disposition', `inline; filename="${fileInfo.filename}"`);
+        res.set('Cross-Origin-Resource-Policy', 'cross-origin');
 
         // Stream file
         const downloadStream = getFileStream(fileId);

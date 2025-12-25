@@ -11,6 +11,7 @@ const { initGridFS } = require('./utils/fileUpload');
 const { initSocket } = require('./utils/socket');
 
 const app = express();
+app.set('etag', false);
 
 // Connect to database
 connectDB();
@@ -26,6 +27,12 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Prevent API responses from being cached (avoids 304 + empty body issues in SPA clients)
+app.use('/api', (req, res, next) => {
+    res.set('Cache-Control', 'no-store');
+    next();
+});
 
 // Logging
 if (process.env.NODE_ENV === 'development') {

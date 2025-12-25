@@ -4,7 +4,7 @@ import { toast } from 'react-toastify';
 import { FiUser, FiMail, FiPhone, FiEdit2, FiSave, FiX, FiLock, FiCamera } from 'react-icons/fi';
 import DashboardLayout from '../../components/DashboardLayout';
 import { authService } from '../../services';
-import { updateUserAvatar } from '../../redux/slices/authSlice';
+import { logout, setUser, updateUserAvatar } from '../../redux/slices/authSlice';
 
 const ProfilePage = () => {
     const { user } = useSelector((state) => state.auth);
@@ -17,6 +17,13 @@ const ProfilePage = () => {
     });
     const [loading, setLoading] = useState(false);
     const fileInputRef = useRef(null);
+    const [showPasswordForm, setShowPasswordForm] = useState(false);
+    const [passwordLoading, setPasswordLoading] = useState(false);
+    const [passwordData, setPasswordData] = useState({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+    });
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -50,13 +57,12 @@ const ProfilePage = () => {
         setLoading(true);
 
         try {
-            // TODO: Implement update profile API call
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
+            const data = await authService.updateMe(formData);
+            dispatch(setUser(data.data));
             toast.success('Profile updated successfully!');
             setIsEditing(false);
         } catch (error) {
-            toast.error('Failed to update profile');
+            toast.error(error.response?.data?.message || 'Failed to update profile');
         } finally {
             setLoading(false);
         }
@@ -69,6 +75,43 @@ const ProfilePage = () => {
             phone: user?.phone || ''
         });
         setIsEditing(false);
+    };
+
+    const handlePasswordChange = (e) => {
+        setPasswordData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    };
+
+    const submitPasswordChange = async () => {
+        if (!passwordData.currentPassword || !passwordData.newPassword) {
+            toast.error('Please fill in all password fields');
+            return;
+        }
+        if (passwordData.newPassword !== passwordData.confirmPassword) {
+            toast.error('New password and confirmation do not match');
+            return;
+        }
+
+        try {
+            setPasswordLoading(true);
+            const response = await authService.changePassword({
+                currentPassword: passwordData.currentPassword,
+                newPassword: passwordData.newPassword,
+            });
+            toast.success(response.message || 'Password changed');
+
+            setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+            setShowPasswordForm(false);
+
+            if (response.data?.requiresReauth) {
+                dispatch(logout());
+                window.location.href = '/login';
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error(error.response?.data?.message || 'Failed to change password');
+        } finally {
+            setPasswordLoading(false);
+        }
     };
 
     return (
@@ -231,11 +274,61 @@ const ProfilePage = () => {
                             <h3 className="text-lg font-bold text-gray-900 mb-1">Password</h3>
                             <p className="text-gray-600 text-sm">Manage your password settings</p>
                         </div>
-                        <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                        <button
+                            type="button"
+                            onClick={() => setShowPasswordForm((v) => !v)}
+                            className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                        >
                             <FiLock className="w-4 h-4" />
-                            Change Password
+                            {showPasswordForm ? 'Close' : 'Change Password'}
                         </button>
                     </div>
+
+                    {showPasswordForm && (
+                        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Current Password</label>
+                                <input
+                                    type="password"
+                                    name="currentPassword"
+                                    value={passwordData.currentPassword}
+                                    onChange={handlePasswordChange}
+                                    className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">New Password</label>
+                                <input
+                                    type="password"
+                                    name="newPassword"
+                                    value={passwordData.newPassword}
+                                    onChange={handlePasswordChange}
+                                    className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+                                <input
+                                    type="password"
+                                    name="confirmPassword"
+                                    value={passwordData.confirmPassword}
+                                    onChange={handlePasswordChange}
+                                    className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                />
+                            </div>
+
+                            <div className="md:col-span-3 flex justify-end">
+                                <button
+                                    type="button"
+                                    disabled={passwordLoading}
+                                    onClick={submitPasswordChange}
+                                    className="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
+                                >
+                                    {passwordLoading ? 'Saving...' : 'Update Password'}
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Account Info */}

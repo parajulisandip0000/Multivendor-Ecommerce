@@ -8,6 +8,9 @@ const {
     deleteProduct,
     getOrders,
     updateOrderStatus,
+    getAnalytics,
+    getStoreSettings,
+    updateStoreSettings,
 } = require('../controllers/storeManager.controller');
 const { protect, authorize } = require('../middleware/auth.middleware');
 const { upload } = require('../utils/fileUpload');
@@ -23,5 +26,9 @@ router.delete('/products/:productId', deleteProduct);
 
 router.get('/orders', getOrders);
 router.put('/orders/:orderId/status', updateOrderStatus);
+
+router.get('/analytics', getAnalytics);
+router.get('/settings', getStoreSettings);
+router.put('/settings', updateStoreSettings);
 
 module.exports = router;

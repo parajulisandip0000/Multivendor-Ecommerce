@@ -38,6 +38,7 @@ import StoreProfilePage from './pages/seller/StoreProfilePage';
 import AnalyticsPage from './pages/seller/AnalyticsPage';
 import ManagersPage from './pages/seller/ManagersPage';
 import RegisterStorePage from './pages/seller/RegisterStorePage';
+import SellerEditProfilePage from './pages/seller/SellerEditProfilePage';
 
 // Admin Pages
 import SuperAdminDashboard from './pages/admin/SuperAdminDashboard';
@@ -50,6 +51,10 @@ import PlatformSettingsPage from './pages/admin/PlatformSettingsPage';
 import AdminAnalyticsPage from './pages/admin/AdminAnalyticsPage';
 import StoreAdminDashboard from './pages/admin/StoreAdminDashboard';
 import StoreManagerDashboard from './pages/admin/StoreManagerDashboard';
+import StoreManagerAnalyticsPage from './pages/admin/StoreManagerAnalyticsPage';
+import StoreManagerSettingsPage from './pages/admin/StoreManagerSettingsPage';
+import StoreManagerProfilePage from './pages/admin/StoreManagerProfilePage';
+import SuperAdminProfilePage from './pages/admin/SuperAdminProfilePage';
 import ProductManagementPage from './pages/admin/ProductManagementPage';
 import OrderManagementPage from './pages/admin/OrderManagementPage';
 
@@ -282,6 +287,14 @@ function App() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/admin/profile"
+        element={
+          <ProtectedRoute allowedRoles={['superadmin']}>
+            <SuperAdminProfilePage />
+          </ProtectedRoute>
+        }
+      />
 
       {/* Store Admin Routes */}
       <Route
@@ -323,6 +336,30 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={['store_manager', 'store_admin']}>
             <StoreManagerChatPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/store-manager/analytics"
+        element={
+          <ProtectedRoute allowedRoles={['store_manager', 'store_admin']}>
+            <StoreManagerAnalyticsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/store-manager/settings"
+        element={
+          <ProtectedRoute allowedRoles={['store_manager', 'store_admin']}>
+            <StoreManagerSettingsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/store-manager/profile"
+        element={
+          <ProtectedRoute allowedRoles={['store_manager', 'store_admin']}>
+            <StoreManagerProfilePage />
           </ProtectedRoute>
         }
       />
@@ -390,6 +427,14 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={['store_admin']}>
             <StoreProfilePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/seller/edit-profile"
+        element={
+          <ProtectedRoute allowedRoles={['store_admin']}>
+            <SellerEditProfilePage />
           </ProtectedRoute>
         }
       />

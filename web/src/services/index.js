@@ -21,6 +21,16 @@ export const authService = {
         return response.data;
     },
 
+    updateMe: async (data) => {
+        const response = await api.put('/auth/me', data);
+        return response.data;
+    },
+
+    changePassword: async (data) => {
+        const response = await api.post('/auth/change-password', data);
+        return response.data;
+    },
+
     updateProfilePicture: async (formData) => {
         const response = await api.post('/auth/profile-picture', formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
@@ -187,7 +197,9 @@ export const storeAdminService = {
     },
 
     updateProfile: async (data) => {
-        const response = await api.put('/store-admin/profile', data);
+        const response = await api.put('/store-admin/profile', data, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
         return response.data;
     },
 
@@ -220,7 +232,9 @@ export const storeAdminService = {
 
     // Product Management
     createProduct: async (productData) => {
-        const response = await api.post('/store-admin/products', productData);
+        const response = await api.post('/store-admin/products', productData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
         return response.data;
     },
 
@@ -235,7 +249,9 @@ export const storeAdminService = {
     },
 
     updateProduct: async (id, productData) => {
-        const response = await api.put(`/store-admin/products/${id}`, productData);
+        const response = await api.put(`/store-admin/products/${id}`, productData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
         return response.data;
     },
 
@@ -298,6 +314,21 @@ export const storeManagerService = {
 
     updateOrderStatus: async (orderId, data) => {
         const response = await api.put(`/store-manager/orders/${orderId}/status`, data);
+        return response.data;
+    },
+
+    getAnalytics: async (params) => {
+        const response = await api.get('/store-manager/analytics', { params });
+        return response.data;
+    },
+
+    getStoreSettings: async () => {
+        const response = await api.get('/store-manager/settings');
+        return response.data;
+    },
+
+    updateStoreSettings: async (data) => {
+        const response = await api.put('/store-manager/settings', data);
         return response.data;
     },
 };

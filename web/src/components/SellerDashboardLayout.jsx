@@ -8,11 +8,14 @@ import { fetchDashboard } from '../redux/slices/sellerSlice'; // To preload stor
 
 const SellerDashboardLayout = ({ children }) => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [avatarError, setAvatarError] = useState(false);
     const location = useLocation();
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const { user } = useSelector((state) => state.auth);
     const { storeProfile } = useSelector((state) => state.seller);
+    const userInitial = (user?.name || user?.email || 'U').trim().charAt(0).toUpperCase();
+    const avatarSrc = !avatarError ? (user?.avatar || null) : null;
 
     useEffect(() => {
         // Preload store info if not available
@@ -52,9 +55,25 @@ const SellerDashboardLayout = ({ children }) => {
                     </button>
                     <span className="font-bold text-lg text-gray-900">Seller Panel</span>
                 </div>
-                <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden">
-                    <img src={user?.avatar || '/avatar-placeholder.svg'} alt="Profile" className="w-full h-full object-cover" />
-                </div>
+                <button
+                    type="button"
+                    onClick={() => navigate('/seller/edit-profile')}
+                    className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden"
+                    aria-label="Edit profile"
+                >
+                    {avatarSrc ? (
+                        <img
+                            src={avatarSrc}
+                            alt="Profile"
+                            className="w-full h-full object-cover"
+                            onError={() => setAvatarError(true)}
+                        />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-700 font-semibold bg-gray-200">
+                            {userInitial}
+                        </div>
+                    )}
+                </button>
             </div>
 
             <div className="flex">
@@ -103,15 +122,31 @@ const SellerDashboardLayout = ({ children }) => {
 
                         {/* User Info & Logout */}
                         <div className="p-4 border-t border-gray-200 bg-gray-50">
-                            <div className="flex items-center gap-3 mb-4 px-2">
+                            <button
+                                type="button"
+                                onClick={() => navigate('/seller/edit-profile')}
+                                className="flex items-center gap-3 mb-4 px-2 w-full text-left hover:bg-gray-100 rounded-lg py-2 transition-colors"
+                                aria-label="Edit profile"
+                            >
                                 <div className="w-10 h-10 rounded-full bg-white border border-gray-200 overflow-hidden">
-                                    <img src={user?.avatar || '/avatar-placeholder.svg'} alt={user?.name} className="w-full h-full object-cover" />
+                                    {avatarSrc ? (
+                                        <img
+                                            src={avatarSrc}
+                                            alt={user?.name || 'Profile'}
+                                            className="w-full h-full object-cover"
+                                            onError={() => setAvatarError(true)}
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-gray-700 font-semibold bg-gray-100">
+                                            {userInitial}
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-semibold text-gray-900 truncate">{user?.name}</p>
-                                    <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                                    <p className="text-sm font-semibold text-gray-900 truncate">{user?.name || 'Account'}</p>
+                                    <p className="text-xs text-gray-500 truncate">{user?.email || ''}</p>
                                 </div>
-                            </div>
+                            </button>
                             <button
                                 onClick={handleLogout}
                                 className="flex items-center gap-3 px-4 py-2 rounded-lg text-red-600 hover:bg-red-50 w-full transition-colors text-sm font-medium"

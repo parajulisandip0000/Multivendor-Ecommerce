@@ -175,7 +175,7 @@ const StoreManagerDashboard = () => {
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <h4 className="font-medium text-gray-900 truncate">{product.name}</h4>
-                                                    <p className="text-sm text-red-500 font-medium">Only {product.stock} left</p>
+                                                    <p className="text-sm text-red-500 font-medium">Only {product.quantity} left</p>
                                                 </div>
                                                 <Link
                                                     to={`/store-manager/products?search=${product.name}`}

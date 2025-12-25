@@ -4,6 +4,7 @@ const {
     generateRefreshToken,
     verifyRefreshToken,
 } = require('../utils/jwt');
+const { getFileUrl } = require('../utils/url');
 
 // @desc    Register a new user
 // @route   POST /api/auth/register
@@ -199,6 +200,94 @@ const getMe = async (req, res, next) => {
     }
 };
 
+// @desc    Update current user's profile
+// @route   PUT /api/auth/me
+// @access  Private
+const updateMe = async (req, res, next) => {
+    try {
+        const { name, email, phone, password } = req.body;
+
+        if (password !== undefined) {
+            return res.status(400).json({
+                success: false,
+                message: 'Use /api/auth/change-password to update your password',
+            });
+        }
+
+        const user = await User.findById(req.user._id).select('+password');
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found',
+            });
+        }
+
+        if (email && email !== user.email) {
+            const emailInUse = await User.findOne({ email, _id: { $ne: user._id } });
+            if (emailInUse) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Email is already in use',
+                });
+            }
+            user.email = email;
+        }
+
+        if (name !== undefined) user.name = name;
+        if (phone !== undefined) user.phone = phone;
+
+        await user.save();
+
+        res.json({
+            success: true,
+            message: 'Profile updated successfully',
+            data: user,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Change current user's password
+// @route   POST /api/auth/change-password
+// @access  Private
+const changePassword = async (req, res, next) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+
+        const user = await User.findById(req.user._id).select('+password +refreshToken');
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found',
+            });
+        }
+
+        const isMatch = await user.comparePassword(currentPassword);
+        if (!isMatch) {
+            return res.status(400).json({
+                success: false,
+                message: 'Current password is incorrect',
+            });
+        }
+
+        user.password = newPassword;
+        // Invalidate refresh token so user must re-authenticate on next refresh
+        user.refreshToken = null;
+        await user.save();
+
+        res.json({
+            success: true,
+            message: 'Password changed successfully. Please log in again.',
+            data: {
+                requiresReauth: true,
+            },
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 // Exports moved to end
 
 // @desc    Update profile picture
@@ -218,8 +307,7 @@ const updateProfilePicture = async (req, res, next) => {
         // Upload new file
         const fileData = await uploadToGridFS(req.file);
 
-        // Construct the file URL
-        const fileUrl = `http://localhost:5000/api/files/name/${fileData.filename}`;
+        const fileUrl = getFileUrl(req, fileData.fileId);
 
         // Get current user to check for old avatar
         const user = await User.findById(req.user._id);
@@ -249,5 +337,7 @@ module.exports = {
     refreshAccessToken,
     logout,
     getMe,
+    updateMe,
+    changePassword,
     updateProfilePicture,
 };

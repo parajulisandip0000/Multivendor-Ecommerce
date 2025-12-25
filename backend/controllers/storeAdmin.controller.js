@@ -3,6 +3,7 @@ const User = require('../models/User');
 const Product = require('../models/Product');
 const Order = require('../models/Order');
 const { uploadToGridFS, deleteFromGridFS } = require('../utils/fileUpload');
+const { getFileUrl } = require('../utils/url');
 
 const resolveStoreForAdmin = async (user) => {
     if (user.storeId) {
@@ -156,14 +157,14 @@ const updateProfile = async (req, res, next) => {
         if (req.files && req.files.logo) {
             const logoFile = req.files.logo[0];
             const uploadedLogo = await uploadToGridFS(logoFile);
-            store.logo = `/api/files/${uploadedLogo.fileId}`;
+            store.logo = getFileUrl(req, uploadedLogo.fileId);
         }
 
         // Handle banner upload
         if (req.files && req.files.banner) {
             const bannerFile = req.files.banner[0];
             const uploadedBanner = await uploadToGridFS(bannerFile);
-            store.banner = `/api/files/${uploadedBanner.fileId}`;
+            store.banner = getFileUrl(req, uploadedBanner.fileId);
         }
 
         await store.save();
@@ -262,6 +263,9 @@ const createProduct = async (req, res, next) => {
             store: store._id,
         };
 
+        // Images are managed via file uploads only (prevent invalid body payloads from breaking validation)
+        delete productData.images;
+
         // Handle image uploads if files are present
         if (req.files && req.files.length > 0) {
             const imagePromises = req.files.map((file) => uploadToGridFS(file));
@@ -269,7 +273,7 @@ const createProduct = async (req, res, next) => {
 
             productData.images = uploadedImages.map((img, index) => ({
                 fileId: img.fileId,
-                url: `/api/files/${img.fileId}`,
+                url: getFileUrl(req, img.fileId),
                 isDefault: index === 0,
             }));
         }
@@ -371,6 +375,7 @@ const updateProduct = async (req, res, next) => {
         }
 
         Object.keys(req.body).forEach((key) => {
+            if (key === 'images' || key === 'store') return;
             product[key] = req.body[key];
         });
 
@@ -381,7 +386,7 @@ const updateProduct = async (req, res, next) => {
 
             const newImages = uploadedImages.map((img) => ({
                 fileId: img.fileId,
-                url: `/api/files/${img.fileId}`,
+                url: getFileUrl(req, img.fileId),
                 isDefault: false,
             }));
 

@@ -1,6 +1,8 @@
 const Product = require('../models/Product');
 const Order = require('../models/Order');
+const Store = require('../models/Store');
 const { uploadToGridFS, deleteFromGridFS } = require('../utils/fileUpload');
+const { getFileUrl } = require('../utils/url');
 
 // @desc    Get store manager dashboard stats
 // @route   GET /api/store-manager/dashboard
@@ -9,33 +11,49 @@ const getDashboard = async (req, res, next) => {
     try {
         const storeId = req.user.storeId;
 
+        if (!storeId) {
+            return res.status(400).json({
+                success: false,
+                message: 'User is not assigned to a store',
+            });
+        }
+
         // Parallel fetch for potential performance boost
         const [
             totalProducts,
             totalOrders,
             pendingOrders,
+            totalRevenuePaid,
             recentOrders,
+            store,
             lowStockProducts
         ] = await Promise.all([
             Product.countDocuments({ store: storeId }),
             Order.countDocuments({ store: storeId }),
             Order.countDocuments({ store: storeId, status: 'processing' }), // Assuming 'processing' as pending
+            Order.aggregate([
+                { $match: { store: storeId, paymentStatus: 'paid' } },
+                { $group: { _id: null, total: { $sum: '$total' } } },
+            ]),
             Order.find({ store: storeId })
                 .sort({ createdAt: -1 })
                 .limit(5)
                 .populate('customer', 'name email'),
-            Product.find({ store: storeId, stock: { $lte: 5 } }) // Simple low stock check
+            Store.findById(storeId).select('name logo banner status settings'),
+            Product.find({ store: storeId, quantity: { $lte: 5 } }) // Simple low stock check
                 .limit(5)
-                .select('name stock images')
+                .select('name quantity images')
         ]);
 
         res.json({
             success: true,
             data: {
+                store,
                 stats: {
                     totalProducts,
                     totalOrders,
                     pendingOrders,
+                    totalRevenue: totalRevenuePaid?.[0]?.total || 0,
                 },
                 recentOrders,
                 lowStockProducts
@@ -87,6 +105,9 @@ const createProduct = async (req, res, next) => {
             store: req.user.storeId,
         };
 
+        // Images are managed via file uploads only (prevent invalid body payloads from breaking validation)
+        delete productData.images;
+
         // Handle image uploads if files are present
         if (req.files && req.files.length > 0) {
             const imagePromises = req.files.map((file) => uploadToGridFS(file));
@@ -94,7 +115,7 @@ const createProduct = async (req, res, next) => {
 
             productData.images = uploadedImages.map((img, index) => ({
                 fileId: img.fileId,
-                url: `/api/files/${img.fileId}`,
+                url: getFileUrl(req, img.fileId),
                 isDefault: index === 0,
             }));
         }
@@ -129,6 +150,7 @@ const updateProduct = async (req, res, next) => {
         }
 
         Object.keys(req.body).forEach((key) => {
+            if (key === 'images' || key === 'store') return;
             product[key] = req.body[key];
         });
 
@@ -139,7 +161,7 @@ const updateProduct = async (req, res, next) => {
 
             const newImages = uploadedImages.map((img) => ({
                 fileId: img.fileId,
-                url: `/api/files/${img.fileId}`,
+                url: getFileUrl(req, img.fileId),
                 isDefault: false,
             }));
 
@@ -270,6 +292,193 @@ const updateOrderStatus = async (req, res, next) => {
     }
 };
 
+// @desc    Get analytics for manager's store
+// @route   GET /api/store-manager/analytics
+// @access  Private/StoreManager
+const getAnalytics = async (req, res, next) => {
+    try {
+        const storeId = req.user.storeId;
+        if (!storeId) {
+            return res.status(400).json({
+                success: false,
+                message: 'User is not assigned to a store',
+            });
+        }
+
+        const daysRaw = Number(req.query.days ?? 30);
+        const days = Number.isFinite(daysRaw) ? Math.max(1, Math.min(365, Math.floor(daysRaw))) : 30;
+
+        const since = new Date();
+        since.setDate(since.getDate() - days);
+
+        const [salesData, topProducts, totals] = await Promise.all([
+            Order.aggregate([
+                { $match: { store: storeId, createdAt: { $gte: since } } },
+                {
+                    $group: {
+                        _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+                        totalSales: { $sum: '$total' },
+                        orderCount: { $sum: 1 },
+                    },
+                },
+                { $sort: { _id: 1 } },
+            ]),
+            Order.aggregate([
+                { $match: { store: storeId } },
+                { $unwind: '$items' },
+                {
+                    $group: {
+                        _id: '$items.product',
+                        name: { $first: '$items.name' },
+                        totalSold: { $sum: '$items.quantity' },
+                        revenue: { $sum: '$items.subtotal' },
+                    },
+                },
+                { $sort: { totalSold: -1 } },
+                { $limit: 5 },
+            ]),
+            Order.aggregate([
+                { $match: { store: storeId } },
+                {
+                    $group: {
+                        _id: null,
+                        totalOrders: { $sum: 1 },
+                        totalSales: { $sum: '$total' },
+                        totalPaidRevenue: {
+                            $sum: {
+                                $cond: [{ $eq: ['$paymentStatus', 'paid'] }, '$total', 0],
+                            },
+                        },
+                    },
+                },
+            ]),
+        ]);
+
+        res.json({
+            success: true,
+            data: {
+                rangeDays: days,
+                totals: {
+                    totalOrders: totals?.[0]?.totalOrders || 0,
+                    totalSales: totals?.[0]?.totalSales || 0,
+                    totalPaidRevenue: totals?.[0]?.totalPaidRevenue || 0,
+                },
+                sales: salesData,
+                topProducts,
+            },
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Get store settings for manager's store
+// @route   GET /api/store-manager/settings
+// @access  Private/StoreManager
+const getStoreSettings = async (req, res, next) => {
+    try {
+        const storeId = req.user.storeId;
+        if (!storeId) {
+            return res.status(400).json({
+                success: false,
+                message: 'User is not assigned to a store',
+            });
+        }
+
+        const store = await Store.findById(storeId).select(
+            'name description email phone address logo banner settings paymentInfo status'
+        );
+
+        if (!store) {
+            return res.status(404).json({
+                success: false,
+                message: 'Store not found',
+            });
+        }
+
+        res.json({
+            success: true,
+            data: store,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Update store settings for manager's store
+// @route   PUT /api/store-manager/settings
+// @access  Private/StoreManager
+const updateStoreSettings = async (req, res, next) => {
+    try {
+        const storeId = req.user.storeId;
+        if (!storeId) {
+            return res.status(400).json({
+                success: false,
+                message: 'User is not assigned to a store',
+            });
+        }
+
+        const store = await Store.findById(storeId);
+        if (!store) {
+            return res.status(404).json({
+                success: false,
+                message: 'Store not found',
+            });
+        }
+
+        const allowedSettingsKeys = [
+            'isActive',
+            'acceptOrders',
+            'minOrderAmount',
+            'shippingFee',
+            'freeShippingThreshold',
+        ];
+        const allowedPaymentKeys = [
+            'bankName',
+            'accountNumber',
+            'accountName',
+            'esewaId',
+            'khaltiId',
+        ];
+
+        if (req.body.settings && typeof req.body.settings === 'object') {
+            allowedSettingsKeys.forEach((key) => {
+                if (req.body.settings[key] !== undefined) {
+                    store.settings[key] = req.body.settings[key];
+                }
+            });
+        }
+
+        if (req.body.paymentInfo && typeof req.body.paymentInfo === 'object') {
+            allowedPaymentKeys.forEach((key) => {
+                if (req.body.paymentInfo[key] !== undefined) {
+                    store.paymentInfo[key] = req.body.paymentInfo[key];
+                }
+            });
+        }
+
+        // Allow store_admin to update store profile fields from the manager panel
+        if (req.user.role === 'store_admin') {
+            const allowedStoreKeys = ['name', 'description', 'email', 'phone', 'address'];
+            allowedStoreKeys.forEach((key) => {
+                if (req.body[key] !== undefined) {
+                    store[key] = req.body[key];
+                }
+            });
+        }
+
+        await store.save();
+
+        res.json({
+            success: true,
+            message: 'Store settings updated successfully',
+            data: store,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
     getDashboard,
     getProducts,
@@ -278,4 +487,7 @@ module.exports = {
     deleteProduct,
     getOrders,
     updateOrderStatus,
+    getAnalytics,
+    getStoreSettings,
+    updateStoreSettings,
 };
