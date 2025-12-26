@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { FiHome, FiShoppingBag, FiBox, FiSettings, FiLogOut, FiMenu, FiX, FiPieChart, FiUsers, FiMessageCircle } from 'react-icons/fi';
+import { FiHome, FiShoppingBag, FiBox, FiSettings, FiLogOut, FiMenu, FiX, FiPieChart, FiUsers, FiMessageCircle, FiTag, FiTruck, FiEdit3 } from 'react-icons/fi';
 import { logout } from '../redux/slices/authSlice';
 import { toast } from 'react-toastify';
 import { fetchDashboard } from '../redux/slices/sellerSlice'; // To preload store info
@@ -30,8 +30,11 @@ const SellerDashboardLayout = ({ children }) => {
         { path: '/seller/products', icon: FiBox, label: 'Products' },
         { path: '/seller/orders', icon: FiShoppingBag, label: 'Orders' },
         { path: '/seller/analytics', icon: FiPieChart, label: 'Analytics' },
+        { path: '/seller/shipping', icon: FiTruck, label: 'Shipping' },
+        { path: '/seller/coupons', icon: FiTag, label: 'Coupons' },
         { path: '/seller/managers', icon: FiUsers, label: 'Managers' },
-        { path: '/seller/profile', icon: FiSettings, label: 'Store Settings' },
+        { path: '/seller/settings', icon: FiSettings, label: 'Store Settings' },
+        { path: '/seller/profile', icon: FiEdit3, label: 'Store Profile' },
     ];
 
     const handleLogout = () => {

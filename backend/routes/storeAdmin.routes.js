@@ -3,6 +3,8 @@ const router = express.Router();
 const {
     registerStore,
     getDashboard,
+    getStoreSettings,
+    updateStoreSettings,
     updateProfile,
     addManager,
     getManagers,
@@ -28,6 +30,8 @@ router.use(protect, authorize('store_admin'));
 
 router.post('/register', registerStore);
 router.get('/dashboard', getDashboard);
+router.get('/settings', getStoreSettings);
+router.put('/settings', updateStoreSettings);
 router.put('/profile', upload.fields([
     { name: 'logo', maxCount: 1 },
     { name: 'banner', maxCount: 1 }

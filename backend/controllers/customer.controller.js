@@ -3,7 +3,50 @@ const Wishlist = require('../models/Wishlist');
 const Order = require('../models/Order');
 const Review = require('../models/Review');
 const Product = require('../models/Product');
+const Store = require('../models/Store');
+const Coupon = require('../models/Coupon');
 const mongoose = require('mongoose');
+
+const normalizeCouponCode = (code) => String(code || '').trim().toUpperCase();
+
+const computeShippingFee = ({ storeSubtotal, settings, items }) => {
+    const threshold = Math.max(0, Number(settings?.freeShippingThreshold || 0));
+    if (threshold > 0 && storeSubtotal >= threshold) return 0;
+
+    const method = String(settings?.shippingMethod || 'flat');
+    if (method === 'per_item') {
+        const perItemFee = Math.max(0, Number(settings?.shippingPerItemFee || 0));
+        const qty = Array.isArray(items)
+            ? items.reduce((sum, item) => sum + Math.max(0, Number(item?.quantity || 0)), 0)
+            : 0;
+        let fee = perItemFee * qty;
+        const maxFee = Math.max(0, Number(settings?.shippingMaxFee || 0));
+        if (maxFee > 0) fee = Math.min(fee, maxFee);
+        return fee;
+    }
+
+    const flatFee = Math.max(0, Number(settings?.shippingFee || 0));
+    return flatFee;
+};
+
+const computeCouponDiscount = ({ subtotal, coupon }) => {
+    if (!coupon) return 0;
+    const discountType = coupon.discountType;
+    const value = Number(coupon.value || 0);
+    if (subtotal <= 0 || value <= 0) return 0;
+
+    if (discountType === 'fixed') {
+        return Math.min(subtotal, value);
+    }
+
+    if (discountType === 'percentage') {
+        const raw = subtotal * (value / 100);
+        const cap = Math.max(0, Number(coupon.maxDiscountAmount || 0));
+        return cap > 0 ? Math.min(raw, cap) : raw;
+    }
+
+    return 0;
+};
 
 // @desc    Get cart
 // @route   GET /api/customer/cart
@@ -12,7 +55,8 @@ const getCart = async (req, res, next) => {
     try {
         const cart = await Cart.findOne({ customer: req.user._id }).populate({
             path: 'items.product',
-            select: 'name price images quantity',
+            select: 'name price images quantity store',
+            populate: { path: 'store', select: 'name status settings' },
         });
 
         res.json({
@@ -52,7 +96,11 @@ const addToCart = async (req, res, next) => {
             await cart.save();
         }
 
-        await cart.populate('items.product', 'name price images');
+        await cart.populate({
+            path: 'items.product',
+            select: 'name price images store',
+            populate: { path: 'store', select: 'name status settings' },
+        });
 
         res.json({
             success: true,
@@ -92,7 +140,8 @@ const updateCartItem = async (req, res, next) => {
         await cart.save();
         await cart.populate({
             path: 'items.product',
-            select: 'name price images quantity compareAtPrice reviewStats',
+            select: 'name price images quantity compareAtPrice reviewStats store',
+            populate: { path: 'store', select: 'name status settings' },
         });
 
         res.json({
@@ -126,7 +175,8 @@ const removeFromCart = async (req, res, next) => {
         await cart.save();
         await cart.populate({
             path: 'items.product',
-            select: 'name price images quantity compareAtPrice reviewStats',
+            select: 'name price images quantity compareAtPrice reviewStats store',
+            populate: { path: 'store', select: 'name status settings' },
         });
 
         res.json({
@@ -236,7 +286,8 @@ const removeFromWishlist = async (req, res, next) => {
 // @access  Private/Customer
 const createOrder = async (req, res, next) => {
     try {
-        const { items, shippingAddress, paymentMethod, customerNote } = req.body;
+        const { items, shippingAddress, paymentMethod, customerNote, couponCode } = req.body;
+        const normalizedCouponCode = normalizeCouponCode(couponCode);
 
         // Calculate totals
         const orderItems = [];
@@ -283,12 +334,93 @@ const createOrder = async (req, res, next) => {
 
         const createdOrders = [];
 
+        if (normalizedCouponCode) {
+            const storeIds = Object.keys(ordersByStore);
+            const match = await Coupon.findOne({
+                store: { $in: storeIds },
+                code: normalizedCouponCode,
+                isActive: true,
+            }).select('_id');
+
+            if (!match) {
+                return res.status(400).json({ success: false, message: 'Coupon code is not valid for these items' });
+            }
+        }
+
         for (const [storeId, storeItems] of Object.entries(ordersByStore)) {
             const cleanItems = storeItems.map(({ store, ...rest }) => rest);
             const storeSubtotal = cleanItems.reduce((sum, item) => sum + item.subtotal, 0);
-            const shippingFee = 0; // Calculate based on store settings
+
+            const store = await Store.findById(storeId).select('status settings');
+            if (!store) {
+                return res.status(404).json({ success: false, message: 'Store not found' });
+            }
+            if (store.status === 'rejected' || store.status === 'suspended' || store.settings?.isActive === false) {
+                return res.status(403).json({ success: false, message: 'Store is not available' });
+            }
+            if (store.settings?.acceptOrders === false) {
+                return res.status(400).json({ success: false, message: 'Store is not accepting orders' });
+            }
+            const minOrderAmount = Math.max(0, Number(store.settings?.minOrderAmount || 0));
+            if (minOrderAmount > 0 && storeSubtotal < minOrderAmount) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Minimum order amount for this store is NRS ${minOrderAmount}`,
+                });
+            }
+
+            const shippingFee = computeShippingFee({ storeSubtotal, settings: store.settings, items: cleanItems });
             const tax = 0; // Calculate if needed
-            const total = storeSubtotal + shippingFee + tax;
+            let discount = 0;
+            let appliedCoupon = null;
+
+            if (normalizedCouponCode) {
+                const coupon = await Coupon.findOne({
+                    store: storeId,
+                    code: normalizedCouponCode,
+                    isActive: true,
+                });
+
+                if (coupon) {
+                    const now = new Date();
+                    if (coupon.startsAt && now < coupon.startsAt) {
+                        return res.status(400).json({ success: false, message: 'Coupon is not active yet' });
+                    }
+                    if (coupon.expiresAt && now > coupon.expiresAt) {
+                        return res.status(400).json({ success: false, message: 'Coupon has expired' });
+                    }
+                    const couponMin = Math.max(0, Number(coupon.minOrderAmount || 0));
+                    if (couponMin > 0 && storeSubtotal < couponMin) {
+                        return res.status(400).json({
+                            success: false,
+                            message: `Minimum order amount for this coupon is NRS ${couponMin}`,
+                        });
+                    }
+                    if (coupon.usageLimit > 0 && coupon.usedCount >= coupon.usageLimit) {
+                        return res.status(400).json({ success: false, message: 'Coupon usage limit reached' });
+                    }
+
+                    discount = computeCouponDiscount({ subtotal: storeSubtotal, coupon });
+                    if (discount > 0) {
+                        const query = { _id: coupon._id, isActive: true };
+                        if (coupon.usageLimit > 0) query.usedCount = { $lt: coupon.usageLimit };
+                        const updated = await Coupon.findOneAndUpdate(query, { $inc: { usedCount: 1 } }, { new: true });
+                        if (!updated) {
+                            return res.status(400).json({ success: false, message: 'Coupon usage limit reached' });
+                        }
+
+                        appliedCoupon = {
+                            couponId: coupon._id,
+                            code: coupon.code,
+                            discountType: coupon.discountType,
+                            value: coupon.value,
+                            amount: discount,
+                        };
+                    }
+                }
+            }
+
+            const total = Math.max(0, storeSubtotal - discount) + shippingFee + tax;
 
             const order = await Order.create({
                 customer: req.user._id,
@@ -297,6 +429,8 @@ const createOrder = async (req, res, next) => {
                 subtotal: storeSubtotal,
                 shippingFee,
                 tax,
+                discount,
+                appliedCoupon,
                 total,
                 shippingAddress,
                 paymentMethod,

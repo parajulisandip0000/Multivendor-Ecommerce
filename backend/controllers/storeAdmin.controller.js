@@ -603,6 +603,95 @@ const updateOrderStatus = async (req, res, next) => {
     }
 };
 
+// @desc    Get store operational settings (store admin)
+// @route   GET /api/store-admin/settings
+// @access  Private/StoreAdmin
+const getStoreSettings = async (req, res, next) => {
+    try {
+        const store = await resolveStoreForAdmin(req.user);
+
+        if (!store) {
+            return res.status(404).json({
+                success: false,
+                message: 'Store not found',
+            });
+        }
+
+        const data = await Store.findById(store._id).select(
+            'name description email phone address logo banner settings paymentInfo status'
+        );
+
+        res.json({ success: true, data });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Update store operational settings (store admin)
+// @route   PUT /api/store-admin/settings
+// @access  Private/StoreAdmin
+const updateStoreSettings = async (req, res, next) => {
+    try {
+        const store = await resolveStoreForAdmin(req.user);
+
+        if (!store) {
+            return res.status(404).json({
+                success: false,
+                message: 'Store not found',
+            });
+        }
+
+        const allowedSettingsKeys = [
+            'isActive',
+            'acceptOrders',
+            'minOrderAmount',
+            'shippingMethod',
+            'shippingFee',
+            'shippingPerItemFee',
+            'shippingMaxFee',
+            'freeShippingThreshold',
+        ];
+
+        const allowedPaymentKeys = [
+            'bankName',
+            'accountNumber',
+            'accountName',
+            'esewaId',
+            'khaltiId',
+        ];
+
+        if (req.body.settings && typeof req.body.settings === 'object') {
+            allowedSettingsKeys.forEach((key) => {
+                if (req.body.settings[key] !== undefined) {
+                    store.settings[key] = req.body.settings[key];
+                }
+            });
+        }
+
+        if (req.body.paymentInfo && typeof req.body.paymentInfo === 'object') {
+            allowedPaymentKeys.forEach((key) => {
+                if (req.body.paymentInfo[key] !== undefined) {
+                    store.paymentInfo[key] = req.body.paymentInfo[key];
+                }
+            });
+        }
+
+        await store.save();
+
+        const data = await Store.findById(store._id).select(
+            'name description email phone address logo banner settings paymentInfo status'
+        );
+
+        res.json({
+            success: true,
+            message: 'Store settings updated successfully',
+            data,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 // @desc    Delete a single product image
 // @route   DELETE /api/store-admin/products/:id/images/:fileId
 // @access  Private/StoreAdmin
@@ -853,6 +942,8 @@ const toggleManagerStatus = async (req, res, next) => {
 module.exports = {
     registerStore,
     getDashboard,
+    getStoreSettings,
+    updateStoreSettings,
     updateProfile,
     addManager,
     getManagers,

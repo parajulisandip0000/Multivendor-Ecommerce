@@ -36,10 +36,13 @@ import SellerProductDetailPage from './pages/seller/SellerProductDetailPage';
 import OrdersPage from './pages/seller/OrdersPage';
 import SellerOrderDetailPage from './pages/seller/OrderDetailPage';
 import StoreProfilePage from './pages/seller/StoreProfilePage';
+import SellerStoreSettingsPage from './pages/seller/StoreSettingsPage';
 import AnalyticsPage from './pages/seller/AnalyticsPage';
 import ManagersPage from './pages/seller/ManagersPage';
 import RegisterStorePage from './pages/seller/RegisterStorePage';
 import SellerEditProfilePage from './pages/seller/SellerEditProfilePage';
+import SellerCouponsPage from './pages/seller/CouponsPage';
+import SellerShippingPage from './pages/seller/ShippingPage';
 
 // Admin Pages
 import SuperAdminDashboard from './pages/admin/SuperAdminDashboard';
@@ -53,7 +56,7 @@ import AdminAnalyticsPage from './pages/admin/AdminAnalyticsPage';
 import StoreAdminDashboard from './pages/admin/StoreAdminDashboard';
 import StoreManagerDashboard from './pages/admin/StoreManagerDashboard';
 import StoreManagerAnalyticsPage from './pages/admin/StoreManagerAnalyticsPage';
-import StoreManagerSettingsPage from './pages/admin/StoreManagerSettingsPage';
+import StoreManagerCouponsPage from './pages/admin/StoreManagerCouponsPage';
 import StoreManagerProfilePage from './pages/admin/StoreManagerProfilePage';
 import SuperAdminProfilePage from './pages/admin/SuperAdminProfilePage';
 import ProductManagementPage from './pages/admin/ProductManagementPage';
@@ -349,10 +352,10 @@ function App() {
         }
       />
       <Route
-        path="/store-manager/settings"
+        path="/store-manager/coupons"
         element={
           <ProtectedRoute allowedRoles={['store_manager', 'store_admin']}>
-            <StoreManagerSettingsPage />
+            <StoreManagerCouponsPage />
           </ProtectedRoute>
         }
       />
@@ -452,6 +455,30 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={['store_admin']}>
             <AnalyticsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/seller/coupons"
+        element={
+          <ProtectedRoute allowedRoles={['store_admin']}>
+            <SellerCouponsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/seller/settings"
+        element={
+          <ProtectedRoute allowedRoles={['store_admin']}>
+            <SellerStoreSettingsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/seller/shipping"
+        element={
+          <ProtectedRoute allowedRoles={['store_admin']}>
+            <SellerShippingPage />
           </ProtectedRoute>
         }
       />

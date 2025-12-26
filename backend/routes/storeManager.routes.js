@@ -10,9 +10,8 @@ const {
     getOrders,
     updateOrderStatus,
     getAnalytics,
-    getStoreSettings,
-    updateStoreSettings,
 } = require('../controllers/storeManager.controller');
+const { listCoupons, createCoupon, updateCoupon, deleteCoupon } = require('../controllers/coupon.controller');
 const { protect, authorize } = require('../middleware/auth.middleware');
 const { upload } = require('../utils/fileUpload');
 
@@ -36,7 +35,10 @@ router.get('/orders', getOrders);
 router.put('/orders/:orderId/status', updateOrderStatus);
 
 router.get('/analytics', getAnalytics);
-router.get('/settings', getStoreSettings);
-router.put('/settings', updateStoreSettings);
+
+router.get('/coupons', listCoupons);
+router.post('/coupons', createCoupon);
+router.put('/coupons/:couponId', updateCoupon);
+router.delete('/coupons/:couponId', deleteCoupon);
 
 module.exports = router;

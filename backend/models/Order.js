@@ -62,6 +62,30 @@ const orderSchema = new mongoose.Schema(
             type: Number,
             default: 0,
         },
+        appliedCoupon: {
+            couponId: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Coupon',
+                default: null,
+            },
+            code: {
+                type: String,
+                default: null,
+            },
+            discountType: {
+                type: String,
+                enum: ['percentage', 'fixed'],
+                default: null,
+            },
+            value: {
+                type: Number,
+                default: null,
+            },
+            amount: {
+                type: Number,
+                default: null,
+            },
+        },
         total: {
             type: Number,
             required: true,
@@ -164,8 +188,8 @@ const orderSchema = new mongoose.Schema(
     }
 );
 
-// Generate order number before saving
-orderSchema.pre('save', async function (next) {
+// Generate order number before validation so required checks pass
+orderSchema.pre('validate', function (next) {
     if (!this.orderNumber) {
         const date = new Date();
         const year = date.getFullYear();

@@ -13,7 +13,7 @@ const getStorePublic = async (req, res, next) => {
         if (!store) {
             return res.status(404).json({ success: false, message: 'Store not found' });
         }
-        if (store.status !== 'approved' || store.settings?.isActive === false) {
+        if (store.status === 'rejected' || store.status === 'suspended' || store.settings?.isActive === false) {
             return res.status(403).json({ success: false, message: 'Store is not available' });
         }
 
@@ -28,17 +28,25 @@ const getStorePublic = async (req, res, next) => {
 // @access  Public
 const getStoreProductsPublic = async (req, res, next) => {
     try {
-        const { page = 1, limit = 12, sort = '-createdAt' } = req.query;
+        const { page = 1, limit = 12, sort = '-createdAt', search } = req.query;
 
         const store = await Store.findById(req.params.id).select('status settings');
         if (!store) {
             return res.status(404).json({ success: false, message: 'Store not found' });
         }
-        if (store.status !== 'approved' || store.settings?.isActive === false) {
+        if (store.status === 'rejected' || store.status === 'suspended' || store.settings?.isActive === false) {
             return res.status(403).json({ success: false, message: 'Store is not available' });
         }
 
         const query = { store: req.params.id, status: 'active', isActive: true };
+
+        if (search) {
+            const q = String(search).trim();
+            if (q) {
+                const re = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+                query.$or = [{ name: re }, { description: re }];
+            }
+        }
 
         const products = await Product.find(query)
             .populate('store', 'name logo')
@@ -63,4 +71,3 @@ const getStoreProductsPublic = async (req, res, next) => {
 };
 
 module.exports = { getStorePublic, getStoreProductsPublic };
-

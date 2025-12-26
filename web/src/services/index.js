@@ -285,6 +285,17 @@ export const storeAdminService = {
         const response = await api.patch(`/store-admin/orders/${id}/status`, { status });
         return response.data;
     },
+
+    // Store settings (operational + payout)
+    getStoreSettings: async () => {
+        const response = await api.get('/store-admin/settings');
+        return response.data;
+    },
+
+    updateStoreSettings: async (data) => {
+        const response = await api.put('/store-admin/settings', data);
+        return response.data;
+    },
 };
 
 export const storeManagerService = {
@@ -344,6 +355,27 @@ export const storeManagerService = {
 
     updateStoreSettings: async (data) => {
         const response = await api.put('/store-manager/settings', data);
+        return response.data;
+    },
+
+    // Coupons
+    getCoupons: async (params) => {
+        const response = await api.get('/store-manager/coupons', { params });
+        return response.data;
+    },
+
+    createCoupon: async (data) => {
+        const response = await api.post('/store-manager/coupons', data);
+        return response.data;
+    },
+
+    updateCoupon: async (couponId, data) => {
+        const response = await api.put(`/store-manager/coupons/${couponId}`, data);
+        return response.data;
+    },
+
+    deleteCoupon: async (couponId) => {
+        const response = await api.delete(`/store-manager/coupons/${couponId}`);
         return response.data;
     },
 };

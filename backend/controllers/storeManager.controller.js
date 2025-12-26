@@ -523,7 +523,10 @@ const updateStoreSettings = async (req, res, next) => {
             'isActive',
             'acceptOrders',
             'minOrderAmount',
+            'shippingMethod',
             'shippingFee',
+            'shippingPerItemFee',
+            'shippingMaxFee',
             'freeShippingThreshold',
         ];
         const allowedPaymentKeys = [

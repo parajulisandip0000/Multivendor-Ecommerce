@@ -28,12 +28,70 @@ const CheckoutPage = () => {
     const [shippingAddress, setShippingAddress] = useState(DEFAULT_ADDRESS);
     const [paymentMethod, setPaymentMethod] = useState('cod');
     const [customerNote, setCustomerNote] = useState('');
+    const [couponCode, setCouponCode] = useState('');
+    const [shippingTotal, setShippingTotal] = useState(0);
+    const [shippingLoading, setShippingLoading] = useState(false);
 
     const isCustomer = isAuthenticated && user?.role === 'customer';
 
     const subtotal = useMemo(() => {
         return cartItems.reduce((sum, item) => sum + Number(item?.product?.price || 0) * Number(item?.quantity || 0), 0);
     }, [cartItems]);
+
+    useEffect(() => {
+        const estimateShipping = async () => {
+            if (!isCustomer || cartItems.length === 0) {
+                setShippingTotal(0);
+                return;
+            }
+
+            setShippingLoading(true);
+            try {
+                const totalsByStore = new Map();
+                const storeSettingsById = new Map();
+                cartItems.forEach((item) => {
+                    const storeValue = item?.product?.store;
+                    const storeId = storeValue ? String(storeValue?._id || storeValue) : null;
+                    if (!storeId) return;
+                    if (storeValue && typeof storeValue === 'object' && storeValue.settings) {
+                        storeSettingsById.set(storeId, storeValue.settings);
+                    }
+                    const current = totalsByStore.get(storeId) || 0;
+                    totalsByStore.set(storeId, current + Number(item?.product?.price || 0) * Number(item?.quantity || 0));
+                });
+
+                let sum = 0;
+                for (const [storeId, storeSubtotal] of totalsByStore.entries()) {
+                    const settings = storeSettingsById.get(storeId) || {};
+                    const method = String(settings?.shippingMethod || 'flat');
+                    const flatFee = Math.max(0, Number(settings?.shippingFee || 0));
+                    const perItemFee = Math.max(0, Number(settings?.shippingPerItemFee || 0));
+                    const maxFee = Math.max(0, Number(settings?.shippingMaxFee || 0));
+                    const threshold = Math.max(0, Number(settings?.freeShippingThreshold || 0));
+                    if (threshold > 0 && storeSubtotal >= threshold) {
+                        sum += 0;
+                    } else if (method === 'per_item') {
+                        const qty = cartItems
+                            .filter((i) => String(i?.product?.store?._id || i?.product?.store || '') === storeId)
+                            .reduce((q, i) => q + Number(i?.quantity || 0), 0);
+                        let fee = perItemFee * qty;
+                        if (maxFee > 0) fee = Math.min(fee, maxFee);
+                        sum += fee;
+                    } else {
+                        sum += flatFee;
+                    }
+                }
+                setShippingTotal(sum);
+            } catch (error) {
+                console.error('Failed to estimate shipping:', error);
+                setShippingTotal(0);
+            } finally {
+                setShippingLoading(false);
+            }
+        };
+
+        estimateShipping();
+    }, [cartItems, isCustomer]);
 
     useEffect(() => {
         const load = async () => {
@@ -89,6 +147,7 @@ const CheckoutPage = () => {
                 shippingAddress,
                 paymentMethod,
                 customerNote: customerNote.trim() || undefined,
+                couponCode: couponCode.trim() || undefined,
             };
 
             const res = await customerService.createOrder(payload);
@@ -263,11 +322,22 @@ const CheckoutPage = () => {
                                 </div>
                                 <div className="flex justify-between text-sm">
                                     <span className="text-gray-600">Shipping</span>
-                                    <span className="font-semibold text-gray-900">NRS 0</span>
+                                    <span className="font-semibold text-gray-900">
+                                        {shippingLoading ? 'Calculating…' : `NRS ${shippingTotal.toLocaleString()}`}
+                                    </span>
+                                </div>
+                                <div className="pt-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Coupon code (optional)</label>
+                                    <input
+                                        value={couponCode}
+                                        onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                                        placeholder="SAVE10"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+                                    />
                                 </div>
                                 <div className="border-t border-gray-200 pt-3 flex justify-between">
                                     <span className="font-bold text-gray-900">Total</span>
-                                    <span className="font-bold text-primary-600">NRS {subtotal.toLocaleString()}</span>
+                                    <span className="font-bold text-primary-600">NRS {(subtotal + shippingTotal).toLocaleString()}</span>
                                 </div>
                             </div>
 

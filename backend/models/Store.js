@@ -81,7 +81,20 @@ const storeSchema = new mongoose.Schema(
                 type: Number,
                 default: 0,
             },
+            shippingMethod: {
+                type: String,
+                enum: ['flat', 'per_item'],
+                default: 'flat',
+            },
             shippingFee: {
+                type: Number,
+                default: 0,
+            },
+            shippingPerItemFee: {
+                type: Number,
+                default: 0,
+            },
+            shippingMaxFee: {
                 type: Number,
                 default: 0,
             },
