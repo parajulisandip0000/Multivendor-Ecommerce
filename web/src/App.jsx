@@ -61,7 +61,7 @@ import OrderManagementPage from './pages/admin/OrderManagementPage';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRoles }) => {
-  const { isAuthenticated, user, token } = useSelector((state) => state.auth);
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
 
   // If we have a token but no user, wait for hydration
   // This prevents redirecting to login/home while fetching user data

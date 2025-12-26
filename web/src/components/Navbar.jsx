@@ -5,8 +5,8 @@ import { logout } from '../redux/slices/authSlice';
 import { useEffect, useState } from 'react';
 import ProductSearchBar from './ProductSearchBar';
 import { customerService } from '../services';
-import { setWishlist } from '../redux/slices/wishlistSlice';
-import { setCart } from '../redux/slices/cartSlice';
+import { setWishlist, clearWishlist } from '../redux/slices/wishlistSlice';
+import { setCart, clearCart } from '../redux/slices/cartSlice';
 
 const Navbar = () => {
     const { isAuthenticated, user } = useSelector((state) => state.auth);
@@ -39,6 +39,8 @@ const Navbar = () => {
 
     const handleLogout = () => {
         dispatch(logout());
+        dispatch(clearCart());
+        dispatch(clearWishlist());
     };
 
     const getDashboardLink = () => {

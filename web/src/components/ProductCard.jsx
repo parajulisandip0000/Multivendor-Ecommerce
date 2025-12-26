@@ -94,7 +94,7 @@ const ProductCard = ({ product, size = 'md', actionButtons = 'details' }) => {
             <Link to={`/products/${product._id}`}>
                 <div className={`relative overflow-hidden ${isSmall ? 'aspect-[4/3]' : 'aspect-square'}`}>
                     <img
-                        src={defaultImage?.url || '/placeholder-product.jpg'}
+                        src={defaultImage?.url || '/placeholder-product.svg'}
                         alt={product.name}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     />

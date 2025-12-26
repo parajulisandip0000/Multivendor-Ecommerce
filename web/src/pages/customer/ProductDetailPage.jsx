@@ -208,7 +208,7 @@ const ProductDetailPage = () => {
                                 <div className="space-y-4">
                                     <div className="aspect-square rounded-xl border border-gray-200 overflow-hidden bg-white">
                                         <ZoomableImage
-                                            src={productImages[selectedImageIndex]?.url || '/placeholder-product.jpg'}
+                                            src={productImages[selectedImageIndex]?.url || '/placeholder-product.svg'}
                                             alt={product.name}
                                             className="w-full h-full"
                                         />

@@ -3,6 +3,7 @@ const Wishlist = require('../models/Wishlist');
 const Order = require('../models/Order');
 const Review = require('../models/Review');
 const Product = require('../models/Product');
+const mongoose = require('mongoose');
 
 // @desc    Get cart
 // @route   GET /api/customer/cart
@@ -89,6 +90,10 @@ const updateCartItem = async (req, res, next) => {
 
         item.quantity = quantity;
         await cart.save();
+        await cart.populate({
+            path: 'items.product',
+            select: 'name price images quantity compareAtPrice reviewStats',
+        });
 
         res.json({
             success: true,
@@ -119,6 +124,10 @@ const removeFromCart = async (req, res, next) => {
         );
 
         await cart.save();
+        await cart.populate({
+            path: 'items.product',
+            select: 'name price images quantity compareAtPrice reviewStats',
+        });
 
         res.json({
             success: true,
@@ -179,6 +188,8 @@ const addToWishlist = async (req, res, next) => {
             await wishlist.save();
         }
 
+        await wishlist.populate('items.product', 'name price images reviewStats compareAtPrice');
+
         res.json({
             success: true,
             message: 'Added to wishlist',
@@ -208,6 +219,7 @@ const removeFromWishlist = async (req, res, next) => {
         );
 
         await wishlist.save();
+        await wishlist.populate('items.product', 'name price images reviewStats compareAtPrice');
 
         res.json({
             success: true,
@@ -227,23 +239,28 @@ const createOrder = async (req, res, next) => {
         const { items, shippingAddress, paymentMethod, customerNote } = req.body;
 
         // Calculate totals
-        let subtotal = 0;
         const orderItems = [];
 
         for (const item of items) {
-            const product = await Product.findById(item.productId);
+            const product = await Product.findById(item.productId).select('name price images store');
             if (!product) {
                 return res.status(404).json({
                     success: false,
                     message: `Product ${item.productId} not found`,
                 });
             }
+            if (!product.store) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Product ${item.productId} is missing a store`,
+                });
+            }
 
             const itemSubtotal = product.price * item.quantity;
-            subtotal += itemSubtotal;
 
             orderItems.push({
                 product: product._id,
+                store: product.store,
                 name: product.name,
                 price: product.price,
                 quantity: item.quantity,
@@ -256,7 +273,8 @@ const createOrder = async (req, res, next) => {
         // Group items by store and create separate orders
         const ordersByStore = {};
         orderItems.forEach((item) => {
-            const storeId = item.product.store.toString();
+            const storeId = item.store?.toString();
+            if (!storeId) return;
             if (!ordersByStore[storeId]) {
                 ordersByStore[storeId] = [];
             }
@@ -266,7 +284,8 @@ const createOrder = async (req, res, next) => {
         const createdOrders = [];
 
         for (const [storeId, storeItems] of Object.entries(ordersByStore)) {
-            const storeSubtotal = storeItems.reduce((sum, item) => sum + item.subtotal, 0);
+            const cleanItems = storeItems.map(({ store, ...rest }) => rest);
+            const storeSubtotal = cleanItems.reduce((sum, item) => sum + item.subtotal, 0);
             const shippingFee = 0; // Calculate based on store settings
             const tax = 0; // Calculate if needed
             const total = storeSubtotal + shippingFee + tax;
@@ -274,7 +293,7 @@ const createOrder = async (req, res, next) => {
             const order = await Order.create({
                 customer: req.user._id,
                 store: storeId,
-                items: storeItems,
+                items: cleanItems,
                 subtotal: storeSubtotal,
                 shippingFee,
                 tax,
@@ -303,20 +322,74 @@ const createOrder = async (req, res, next) => {
     }
 };
 
+// @desc    Get a single customer order
+// @route   GET /api/customer/orders/:id
+// @access  Private/Customer
+const getOrder = async (req, res, next) => {
+    try {
+        const id = String(req.params.id || '').trim();
+
+        const baseQuery = { customer: req.user._id };
+        let order = null;
+
+        if (mongoose.isValidObjectId(id)) {
+            order = await Order.findOne({ ...baseQuery, _id: id }).populate('store', 'name logo');
+        }
+
+        if (!order) {
+            order = await Order.findOne({ ...baseQuery, orderNumber: id }).populate('store', 'name logo');
+        }
+
+        if (!order) {
+            return res.status(404).json({
+                success: false,
+                message: 'Order not found',
+            });
+        }
+
+        res.json({
+            success: true,
+            data: order,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 // @desc    Get customer orders
 // @route   GET /api/customer/orders
 // @access  Private/Customer
 const getOrders = async (req, res, next) => {
     try {
-        const { page = 1, limit = 10 } = req.query;
+        const { page = 1, limit = 10, status, search } = req.query;
 
-        const orders = await Order.find({ customer: req.user._id })
+        const query = { customer: req.user._id };
+
+        if (status) {
+            const statuses = String(status)
+                .split(',')
+                .map((s) => s.trim())
+                .filter(Boolean);
+            if (statuses.length > 0) {
+                query.status = { $in: statuses };
+            }
+        }
+
+        if (search) {
+            const q = String(search).trim();
+            if (q) {
+                const re = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+                query.$or = [{ orderNumber: re }, { 'items.name': re }];
+            }
+        }
+
+        const orders = await Order.find(query)
             .populate('store', 'name logo')
             .limit(limit * 1)
             .skip((page - 1) * limit)
             .sort({ createdAt: -1 });
 
-        const count = await Order.countDocuments({ customer: req.user._id });
+        const count = await Order.countDocuments(query);
 
         res.json({
             success: true,
@@ -374,6 +447,7 @@ module.exports = {
     addToWishlist,
     removeFromWishlist,
     createOrder,
+    getOrder,
     getOrders,
     createReview,
 };

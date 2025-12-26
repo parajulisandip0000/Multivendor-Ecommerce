@@ -117,6 +117,11 @@ export const customerService = {
         return response.data;
     },
 
+    getOrder: async (id) => {
+        const response = await api.get(`/customer/orders/${id}`);
+        return response.data;
+    },
+
     // Reviews
     createReview: async (reviewData) => {
         const response = await api.post('/customer/reviews', reviewData);

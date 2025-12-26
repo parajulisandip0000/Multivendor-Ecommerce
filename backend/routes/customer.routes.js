@@ -9,6 +9,7 @@ const {
     addToWishlist,
     removeFromWishlist,
     createOrder,
+    getOrder,
     getOrders,
     createReview,
 } = require('../controllers/customer.controller');
@@ -31,6 +32,7 @@ router.delete('/wishlist/:itemId', removeFromWishlist);
 // Order routes
 router.post('/orders', createOrder);
 router.get('/orders', getOrders);
+router.get('/orders/:id', getOrder);
 
 // Review routes
 router.post('/reviews', createReview);

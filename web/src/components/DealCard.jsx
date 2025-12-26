@@ -37,11 +37,11 @@ const DealCard = ({ product, dealEndTime }) => {
             <Link to={`/products/${product._id}`} className="block relative">
                 <div className="aspect-square overflow-hidden bg-gray-100">
                     <img
-                        src={product.images?.[0] || '/placeholder-product.jpg'}
+                        src={product.images?.[0] || '/placeholder-product.svg'}
                         alt={product.name}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                         onError={(e) => {
-                            e.target.src = '/placeholder-product.jpg';
+                            e.target.src = '/placeholder-product.svg';
                         }}
                     />
                 </div>
